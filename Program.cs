@@ -1,3 +1,10 @@
+using System.Text;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.IdentityModel.Tokens;
+
 namespace Inventory
 {
     public class Program
@@ -5,18 +12,13 @@ namespace Inventory
         public static void Main(string[] args)
         {
             CreateHostBuilder(args).Build().Run();
-
         }
-
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
                 .ConfigureWebHostDefaults(webBuilder =>
                 {
                     webBuilder.UseStartup<Startup>();
-
                 });
-
-
     }
 }
