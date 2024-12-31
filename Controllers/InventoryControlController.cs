@@ -5,6 +5,7 @@ using System.Data;
 
 namespace Inventory.Controllers
 {
+    [Route("inventory")]
     public class InventoryControlController : Controller
     {
         private readonly ILogger<InventoryControlController> _logger;
@@ -14,7 +15,7 @@ namespace Inventory.Controllers
             _logger = logger;
         }
 
-        [HttpPost]
+        [HttpPost("DeleteElectronic")]
         public ActionResult DeleteElectronic(int id)
         {
             DataLayer.CRUD_Electronic ge = new CRUD_Electronic();
@@ -37,7 +38,7 @@ namespace Inventory.Controllers
 
         //PRODUCT DETAILS GET METHOD (DatLayer:- GetElectronic Model:- GetElectronicModel View:- Product)
 
-        [HttpGet]
+        [HttpGet ("GetElectronicData")]
         public IActionResult GetElectronicData()
         {
 
