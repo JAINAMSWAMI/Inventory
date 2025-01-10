@@ -1,4 +1,11 @@
-﻿using Microsoft.Extensions.FileProviders;
+﻿using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.FileProviders;
+using System.IO;
 
 namespace Inventory
 {
@@ -14,6 +21,17 @@ namespace Inventory
         // Add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // Add cookie-based authentication
+            services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+                .AddCookie(options =>
+                {
+                    options.LoginPath = "/Login/Index";  // Set path to your login page
+                    options.LogoutPath = "/Login/Logout"; // Optional: Set logout path
+                    options.SlidingExpiration = true; // Optional: Enables sliding expiration for sessions
+                    options.ExpireTimeSpan = TimeSpan.FromMinutes(30); // Optional: Set session timeout duration
+                });
+
+            // Add MVC controllers and views
             services.AddControllersWithViews();
         }
 
@@ -30,6 +48,7 @@ namespace Inventory
                 app.UseHsts();
             }
 
+            // Redirect HTTP to HTTPS
             app.UseHttpsRedirection();
 
             // Serve static files from "wwwroot" (default location)
@@ -43,23 +62,26 @@ namespace Inventory
                 RequestPath = ""
             });
 
+            // Enable routing
             app.UseRouting();
 
-            app.UseAuthorization();
+            // Enable authentication (cookie-based)
+            app.UseAuthentication();  // Add this line for cookie authentication
 
+            // Enable authorization (if required)
+            app.UseAuthorization();   // You can customize this for role-based authorization, etc.
+
+            // Configure endpoints for MVC controllers
             app.UseEndpoints(endpoints =>
             {
+                // Default route for login page
                 endpoints.MapControllerRoute(
                     name: "default",
-                    pattern: "{controller=Login}/{action=Login}/{id?}");
+                    pattern: "{controller=Distribution}/{action=ViewShipment}/{id?}");
 
-
-                endpoints.MapControllerRoute(
-                    name: "inventory",
-                    pattern: "{controller = SignUp}/{action = Index}/{id?}"
-                    );
+                // Route for inventory-related actions
+               
             });
-
         }
     }
 }

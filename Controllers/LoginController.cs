@@ -1,10 +1,8 @@
 ﻿using DataLayer;
 using Inventory.Models;
 using Microsoft.AspNetCore.Mvc;
-using System.Numerics;
 using System.Security.Cryptography;
 using System.Text;
-
 
 namespace Inventory.Controllers
 {
@@ -38,13 +36,6 @@ namespace Inventory.Controllers
                 // Check if the user exists and log them in
                 if (login.LoginUser())
                 {
-                    string sessionID = Guid.NewGuid().ToString();
-                    HttpContext.Response.Cookies.Append("SessionId", sessionID, new CookieOptions
-                    {
-                        HttpOnly = true,
-                        Secure = true,
-                        Expires = DateTime.UtcNow.AddMinutes(30)
-                    }); 
                     return RedirectToAction("Index", "SignUp");
                 }
                 else

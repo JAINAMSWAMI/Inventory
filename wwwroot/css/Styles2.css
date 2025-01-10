@@ -12996,3 +12996,128 @@ h1 {
         text-align: center;
     }
 }
+
+
+
+
+
+
+
+
+
+
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+.tracking-container {
+    width: 50%;
+    margin: 50px auto;
+    background: #fff;
+    padding: 30px;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    display: none; /* Initially hidden */
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.progress-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.progress-line {
+    position: absolute;
+    left: 15px;
+    width: 5px;
+    height: 100%;
+    background: lightgray;
+    z-index: 1;
+    border-radius: 3px;
+}
+
+.progress-line-fill {
+    position: absolute;
+    left: 15px;
+    width: 5px;
+    height: 0%;
+    background: #28a745;
+    z-index: 2;
+    border-radius: 3px;
+    transition: height 0.5s ease-in-out;
+}
+
+.step {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+    position: relative;
+    z-index: 3;
+}
+
+.circle {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: lightgray;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    color: white;
+}
+
+    .circle.active {
+        background: #28a745;
+    }
+
+.label {
+    margin-left: 15px;
+    font-size: 16px;
+    color: #333;
+}
+
+    .label.active {
+        color: #28a745;
+        font-weight: bold;
+    }
+
+.input-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 50px auto;
+    width: 750px
+}
+
+input[type="text"] {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    width: 80%;
+    margin-bottom: 15px;
+    font-size: 16px;
+}
+
+button {
+    padding: 10px 20px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 16px
+}
+
+    button:hover {
+        background-color: #218838;
+    }

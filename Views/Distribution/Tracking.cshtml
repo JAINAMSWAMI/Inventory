@@ -1,7 +1,4 @@
-﻿@model Inventory.Models.GetShipmentDetailsModel
-
-
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -13,7 +10,7 @@
     <meta name="author" content="">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <title>SB Admin 2 - Dashboard</title>
-    
+
 
 
 
@@ -191,7 +188,7 @@
                     <div id="layoutSidenav_content">
                         <main>
                             <div class="container-fluid px-4">
-                                <h4 class="mt-4" style="font-weight:700; color:black;">SHIPPING DETAILS </h4>
+                                <h4 class="mt-4" style="font-weight:700; color:black;">ORDER DETAILS </h4>
                             </div>
                         </main>
 
@@ -393,94 +390,98 @@
 
 
 
+    <div class="input-container">
+        <h2>Track Your Order</h2>
+        <input type="text" id="trackingNo" placeholder="Enter Tracking Number">
+        <button type="button" onclick="updateTrackingProgress()">Track Order</button>
+    </div>
 
+    <div class="tracking-container" id="trackingContainer">
+        <h2>Order Tracking</h2>
+        <p>Track your order progress:</p>
 
+        <div class="progress-container">
+            <div class="progress-line"></div>
+            <div class="progress-line-fill" id="progress-line-fill"></div>
 
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                        <div>
+            <!-- Steps -->
+            <div class="step">
+                <div class="circle" id="step1">1</div>
+                <div class="label" id="label1">Order Placed</div>
+            </div>
+            <div class="step">
+                <div class="circle" id="step2">2</div>
+                <div class="label" id="label2">Shipped</div>
+            </div>
+            <div class="step">
+                <div class="circle" id="step3">3</div>
+                <div class="label" id="label3">Out for Delivery</div>
+            </div>
+            <div class="step">
+                <div class="circle" id="step4">4</div>
+                <div class="label" id="label4">Delivered</div>
+            </div>
+        </div>
+    </div>
 
-                            <h4 style="margin-top:11px;"> <span style="color:black;">All Shipping Details</span></h4>
+    <script>
+        async function fetchOrderProgress(trackingNo) {
+            try {
+                // Make the AJAX request to the controller action (no API project)
+                const response = await fetch(`/Distribution/GetOrderProgress?trackingNo=${trackingNo}`);
 
-                        </div>
-                        <div>
-                            <form class="d-none d-sm-inline-block form-inline my-2 my-md-0 mw-100 navbar-search">
-                                <div class="input-group">
-                                    <input id="customSearchInput" type="text" class="form-control bg-light border-0 small" placeholder="Search for..."
-                                           aria-label="Search" aria-describedby="basic-addon2">
-                                    <div class="input-group-append">
-                                        <button class="btn btn-light" type="button">
-                                            <i class="fas fa-search fa-sm"></i>
-                                        </button>
-                                    </div>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table id="datatablesSimple" class="table table-striped table-hover table-bordered">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Shipment ID</th>
-                                        <th>Order No.</th>
-                                        <th>PickUp Date<br>(dd-mm-yy)</th>
-                                        <th>Dispatch Date<br>(dd-mm-yy)</th>
-                                        <th>Expected Date of Arrival<br>(dd-mm-yy)</th>
-                                        <th style="text-align: center;">Shipment Status</th>
-                                        <th>Warehouse Name</th>
-                                        <th>Shipping Company</th>
-                                        <th>Tracking No.</th>
-                                     
-                                        <th>Track</th>
+                if (!response.ok) {
+                    throw new Error("Failed to fetch order progress.");
+                }
 
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var item in Model.Items)
-                                    {
-                                        <tr>
-                                            <td style="text-align: center;">@item.Shipmnt_Id</td>
-                                            <td style="text-align: center;">@item.Order_No</td>
-                                            <td style="text-align: center;">@item.Pickup_Date</td>
-                                            <td style="text-align: center;">@item.Dispatch_Date</td>
-                                            <td style="text-align: center;">@item.Delivery_Expected_Date</td>
-                                            <td class="Shipment_Status" style="text-align: center;">@item.Shipmnt_Status</td>
-                                            <td style="text-align: center;">@item.Warehouse_Name</td>
-                                            <td style="text-align: center;">@item.Shipping_Company</td>
-                                            <td style="text-align: center;">@item.Shipmnt_Tracking_No</td>
-                                            
+                // Parse the JSON response
+                const data = await response.json();
 
-                                            <td>
-                                                <!-- Edit button -->
-                                                <a href="@Url.Action("Tracking", "Distribution", new { id = item.Shipmnt_Id })" class="btn btn-dark btn-sm ">
-                                                   
-                                                    Track
-                                                </a>
+                // Return the current step received from the server
+                return data.currentStep;
+            } catch (error) {
+                console.error("Error fetching order progress:", error);
+                return 1; // Default to the first step if an error occurs
+            }
+        }
 
+        async function updateTrackingProgress() {
+            const trackingNo = document.getElementById("trackingNo").value;
 
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+            // If no tracking number is entered, return early
+            if (!trackingNo) {
+                alert("Please enter a tracking number.");
+                return;
+            }
 
+            const currentStep = await fetchOrderProgress(trackingNo);
+            updateProgress(currentStep);
 
+            // Show the tracking container with a fade-in effect
+            const trackingContainer = document.getElementById("trackingContainer");
+            trackingContainer.style.display = "block";
+            setTimeout(() => trackingContainer.style.opacity = 1, 50);  // Fade-in effect
+        }
 
+        function updateProgress(currentStep) {
+            const progressLineFill = document.getElementById('progress-line-fill');
+            const circles = document.querySelectorAll('.circle');
+            const labels = document.querySelectorAll('.label');
 
+            const progressPercentage = ((currentStep - 1) / (circles.length - 1)) * 100;
+            progressLineFill.style.height = `${progressPercentage}%`;
 
-
-
-
-
-
-
-
-
-
-
+            circles.forEach((circle, index) => {
+                if (index < currentStep) {
+                    circle.classList.add('active');
+                    labels[index].classList.add('active');
+                } else {
+                    circle.classList.remove('active');
+                    labels[index].classList.remove('active');
+                }
+            });
+        }
+    </script>
                 <a class="scroll-to-top rounded" href="#page-top">
                     <i class="fas fa-angle-up"></i>
                 </a>
@@ -522,3 +523,4 @@
 </body>
 
 </html>
+
