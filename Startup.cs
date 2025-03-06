@@ -69,7 +69,8 @@ namespace Inventory
             app.UseAuthentication();  // Add this line for cookie authentication
 
             // Enable authorization (if required)
-            app.UseAuthorization();   // You can customize this for role-based authorization, etc.
+            app.UseAuthorization(); 
+            // You can customize this for role-based authorization, etc.
 
             // Configure endpoints for MVC controllers
             app.UseEndpoints(endpoints =>

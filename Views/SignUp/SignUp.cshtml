@@ -1,102 +1,72 @@
-﻿@{
-    ViewData["Title"] = "SignUp";
+﻿@model Inventory.Models.SignUpModel
+@{
+    Layout = "_SignUp_Layout";
+    ViewData["Title"] = "Sign Up";
 }
 
-
-@model Inventory.Models.SignUpModel
-@if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
-{
-    <div class="alert alert-danger text-center" role="alert">
-        @ViewBag.ErrorMessage
-    </div>
-}
-
-<html lang="en">
-<head>
-    <link rel="stylesheet" href="css/Styles2.css" />
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <meta name="description" content="" />
-    <meta name="author" content="" />
-    <title>Register - SB Admin</title>
-    <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
-
-</head>
-<body class="bg-primary">
-    <div id="layoutAuthentication">
-        <div id="layoutAuthentication_content">
-            <main>
-                <div class="container">
-                    <div class="row justify-content-center">
-                        <div class="col-lg-7">
-                            <div class="card shadow-lg border-0 rounded-lg mt-5">
-                                <div class="card-header"><h3 class="text-center font-weight-light my-4">Create Account</h3></div>
-                                <div class="card-body">
-                                    <form asp-action="SignUp" method="post">
-                                        <div class="row mb-3">
-                                            <div class="col-md-6">
-                                                <div class="form-floating mb-3 mb-md-0">
-                                                    <input class="form-control" asp-for="FirstName" type="text" placeholder="Enter your first name" />
-                                                    <label asp-for="FirstName">First name</label>
-                                                    <span asp-validation-for="FirstName" class="text-danger"></span>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="form-floating">
-                                                    <input class="form-control" asp-for="LastName" type="text" placeholder="Enter your last name" />
-                                                    <label asp-for="LastName">Last name</label>
-                                                    <span asp-validation-for="LastName" class="text-danger"></span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="form-floating mb-3">
-                                            <input class="form-control" asp-for="Email" type="email" placeholder="name@example.com" />
-                                            <label asp-for="Email">Email address</label>
-                                            <span asp-validation-for="Email" class="text-danger"></span>
-                                        </div>
-
-                                     
-                                        <div class="row mb-3">
-                                            <div class="col-md-6">
-                                                <div class="form-floating mb-3 mb-md-0">
-                                                    <input class="form-control" asp-for="Password" type="password" placeholder="Create a password" />
-                                                    <label asp-for="Password">Password</label>
-                                                    <span asp-validation-for="Password" class="text-danger"></span>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-6">
-                                                <div class="form-floating mb-3 mb-md-0">
-                                                    <input class="form-control" asp-for="ConfirmPassword" type="password" placeholder="Confirm password" />
-                                                    <label asp-for="ConfirmPassword">Confirm Password</label>
-                                                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="mt-4 mb-0">
-                                            <button type="submit" class="btn btn-primary">Create Account</button>
-                                        </div>
-                                    </form>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-7">
+            @if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
+            {
+                <div class="alert alert-danger text-center" role="alert">
+                    @ViewBag.ErrorMessage
+                </div>
+            }
+            <div class="card shadow-lg mt-5">
+                <div class="card-header">
+                    <h3 class="text-center">Create Account</h3>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="SignUp" method="post">
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" asp-for="FirstName">First name</label>
+                                    <input class="form-control" asp-for="FirstName" type="text" />
+                                    <span asp-validation-for="FirstName" class="text-danger"></span>
                                 </div>
-
-                                <form>
-                                    <div class="card-footer text-center py-3">
-                                        <div class="small">
-                                        <a asp-controller="Login" asp-action="Login">Already Have an Account? Login!</a>
-                                        </div>
-                                    </div>
-                                </form>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" asp-for="LastName">Last name</label>
+                                    <input class="form-control" asp-for="LastName" type="text" />
+                                    <span asp-validation-for="LastName" class="text-danger"></span>
+                                </div>
                             </div>
                         </div>
+                        <div class="form-group">
+                            <label class="form-label" asp-for="Email">Email address</label>
+                            <input class="form-control" asp-for="Email" type="email" />
+                            <span asp-validation-for="Email" class="text-danger"></span>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" asp-for="Password">Password</label>
+                                    <input class="form-control" asp-for="Password" type="password" />
+                                    <span asp-validation-for="Password" class="text-danger"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" asp-for="ConfirmPassword">Confirm Password</label>
+                                    <input class="form-control" asp-for="ConfirmPassword" type="password" />
+                                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 mb-0">
+                            <button type="submit" class="btn btn-primary w-100">Create Account</button>
+                        </div>
+                    </form>
+                </div>
+                <div class="card-footer text-center py-3">
+                    <div class="small">
+                        <a asp-controller="Login" asp-action="Login">Already have an account? Log in!</a>
                     </div>
                 </div>
-            </main>
-        </div>
-        <div id="layoutAuthentication_footer">
-            <!-- Footer content -->
+            </div>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
-    <script src="js/scripts.js"></script>
-</body>
-</html>
+</div>

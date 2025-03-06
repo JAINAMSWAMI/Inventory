@@ -83,53 +83,7 @@ namespace Inventory.Controllers
         }
 
 
-        // ADD CATEGORY POST METHOD(DataLayer:- AddCategory Model:- AddCategoryModel View:- AddCategory)
-        public ActionResult AddCategory()
-        {
-            return View();
-        }
-
-        [HttpPost]
-        public IActionResult AddCategory(AddCategoryModel addcategoryModel)
-        {
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    AddCategory AD = new AddCategory
-                    {
-
-                        Category_Added_Date = addcategoryModel.Category_Added_Date,
-                        Category_Status = addcategoryModel.Category_Status,
-                        Category_Type = addcategoryModel.Category_Type
-                    };
-
-                    int result = AD.NewCategory();
-
-                    if (result > 0)
-                    {
-                        _logger.LogInformation("Item added successfully.");
-                        return RedirectToAction("GetElectronicData", "InventoryControl");
-                    }
-                    else
-                    {
-                        _logger.LogWarning("Failed to add Item.");
-                        ViewBag.Message = "Failed to add category. Please try again.";
-                        return View(addcategoryModel);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "An error occurred while adding the category.");
-                    ViewBag.Message = "An unexpected error occurred. Please try again later.";
-                    return View(addcategoryModel);
-                }
-            }
-            else
-            {
-                return View(addcategoryModel);
-            }
-        }
+       
 
 
 

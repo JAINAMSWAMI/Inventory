@@ -13121,3 +13121,137 @@ button {
     button:hover {
         background-color: #218838;
     }
+
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background-color: #f8f8f8;
+}
+
+.container {
+    max-width: 600px;
+    margin: auto;
+    background: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+select, input, button {
+    width: 100%;
+    padding: 8px;
+    margin-top: 5px;
+}
+
+button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+    button:hover {
+        background-color: #0056b3;
+    }
+
+.hidden {
+    display: none;
+}
+
+.cart {
+    margin-top: 20px;
+    padding: 10px;
+    background: #e6f7ff;
+    border-radius: 10px;
+}
+
+
+.bg-gradient-primary {
+    background: linear-gradient(45deg, #2937f0, #9f1ae2);
+}
+
+.table th {
+    font-weight: 600;
+    color: #495057;
+    white-space: nowrap;
+}
+
+.table td {
+    color: #555;
+}
+
+.badge {
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+.btn-sm {
+    transition: all 0.2s ease-in-out;
+}
+
+    .btn-sm:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1) !important;
+    }
+
+.table-hover tbody tr {
+    transition: all 0.2s ease-in-out;
+}
+
+    .table-hover tbody tr:hover {
+        background-color: rgba(13, 110, 253, 0.04);
+        transform: scale(1.001);
+    }
+
+/* Improved scrollbar styling */
+.table-responsive {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #888 #f1f1f1;
+}
+
+    .table-responsive::-webkit-scrollbar {
+        height: 8px;
+    }
+
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 4px;
+    }
+
+        .table-responsive::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+/* Print styles */
+media print {
+    .btn, .bg-gradient-primary
+
+{
+    background: none !important;
+}
+
+.text-white {
+    color: #000 !important;
+}
+
+.card {
+    box-shadow: none !important;
+}
+
+.badge {
+    border: 1px solid #dee2e6;
+}
+}

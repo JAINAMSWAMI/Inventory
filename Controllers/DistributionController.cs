@@ -1,5 +1,8 @@
-﻿using Inventory.Models;
+﻿using DataLayer;
+using Inventory.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using System.Data;
 using System.Data.SqlClient;
 
@@ -28,10 +31,10 @@ namespace Inventory.Controllers
             {
                 GetShipmentDetailsModel item = new GetShipmentDetailsModel
                 {
-                    Shipmnt_Id = Convert.ToInt32(row["Shipmnt_Id"]),
+            
                     Order_No = row["Order_No"].ToString(),
-                    Pickup_Date = DateOnly.FromDateTime(Convert.ToDateTime(row["Pickup_Date"])),
-                    Dispatch_Date = DateOnly.FromDateTime(Convert.ToDateTime(row["Dispatch_Date"])),
+                    Order_Date = DateOnly.FromDateTime(Convert.ToDateTime(row["Order_Date"])),
+                    Order_Total_Cost =Convert.ToInt32( row["Order_Total_Cost"]),  
                     Delivery_Expected_Date = DateOnly.FromDateTime(Convert.ToDateTime(row["Delivery_Expected_Date"])),
                     Shipmnt_Status = row["Shipmnt_Status"].ToString(),
                     Warehouse_Name = row["Warehouse_Name"].ToString(),
@@ -61,6 +64,7 @@ namespace Inventory.Controllers
                 {
             new SqlParameter("@Shipmnt_Tracking_No", trackingNo)
                 };
+               
 
                 DataTable dt = dl.ExecuteProcedureSelect("GetOrderProgressByTrackingNo", parameters);
 
@@ -74,7 +78,8 @@ namespace Inventory.Controllers
                     // Map statuses to step numbers
                     int currentStep = status switch
                     {
-                        "Order Placed" => 1,
+                       
+                        "Processing" => 1,
                         "Shipped" => 2,
                         "Out for Delivery" => 3,
                         "Delivered" => 4,
@@ -92,6 +97,76 @@ namespace Inventory.Controllers
                 return Json(new { currentStep = 1 }); // Default to step 1 if there's an error
             }
         }
+
+
+
+
+        public IActionResult DistributionCenter()
+        {
+            return View();
+        }
+
+
+        public ActionResult CreateOrder()
+        {
+            return View();
+        }
+
+        [HttpPost]
+        public IActionResult CreateOrder(CreateOrderModel createordermodel)
+        {
+            if (createordermodel == null)
+            {
+                _logger.LogError("CreateOrderModel is null.");
+                return BadRequest("Invalid request.");
+            }
+
+            createordermodel.Order_No = "ORD-" + DateTime.Now.ToString("yyyyMMddHHmmss") + "-" + new Random().Next(1000, 9999);
+            createordermodel.Shipmnt_Tracking_No = "TRK-" + Guid.NewGuid().ToString("N").Substring(0, 12).ToUpper();
+
+            AddOrder AO = new AddOrder
+            {
+                Order_No = createordermodel.Order_No,
+                Order_Date = createordermodel.Order_Date,
+                Payment_Type = createordermodel.Payment_Type,
+                Payment_Status = createordermodel.Payment_Status,
+                Order_Total_Cost = createordermodel.Order_Total_Cost,
+                Shipping_Address = createordermodel.Shipping_Address,
+                Delivery_Expected_Date = createordermodel.Delivery_Expected_Date,
+                Shipmnt_Tracking_No = createordermodel.Shipmnt_Tracking_No,
+                Shipmnt_Status = createordermodel.Shipmnt_Status,
+                Warehouse_Name = createordermodel.Warehouse_Name,
+                Shipping_Company = createordermodel.Shipping_Company
+            };
+
+            try
+            {
+                int result = AO.AddOrderDetails();
+                if (result <= 0)
+                {
+                    _logger.LogError("Database error while inserting the order.");
+                    ModelState.AddModelError("", "Database error. Please try again.");
+                    return View(createordermodel);
+                }
+
+                return RedirectToAction("OrderSuccess");  // Redirect after successful order creation
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Exception: {ex.Message}");
+                return View(createordermodel);
+            }
+        }
+
+
+
+        public IActionResult OrderSuccess()
+        {
+            return View();
+        }
+
+
+
 
 
     }

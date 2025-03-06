@@ -1,0 +1,170 @@
+﻿@model CreateOrderModel
+@{
+    Layout = "_Layout";
+}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card shadow-lg border-0 rounded-lg">
+                <div class="card-header bg-primary text-white text-center py-4">
+                    <h2 class="font-weight-bold mb-0">Create Order</h2>
+                </div>
+                <div class="card-body p-5">
+                    <form asp-action="CreateOrder" method="post" class="needs-validation" novalidate>
+                        @Html.AntiForgeryToken()
+
+                        <div class="row g-4">
+                            <!-- Order Details Section -->
+                            <div class="col-12">
+                                <h4 class="text-primary mb-4">Order Details</h4>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input asp-for="Order_Date" class="form-control" type="date" />
+                                    <label asp-for="Order_Date"></label>
+                                    <span asp-validation-for="Order_Date" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <select asp-for="Payment_Type" class="form-select">
+                                        <option value="">Select Payment Type</option>
+                                        <option value="Credit Card">Credit Card</option>
+                                        <option value="Debit Card">Debit Card</option>
+                                        <option value="Net Banking">Net Banking</option>
+                                        <option value="UPI">UPI</option>
+                                        <option value="Cash on Delivery">Cash on Delivery</option>
+                                    </select>
+                                    <label asp-for="Payment_Type"></label>
+                                    <span asp-validation-for="Payment_Type" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input asp-for="Order_Total_Cost" class="form-control" type="number" step="0.01" />
+                                    <label asp-for="Order_Total_Cost"></label>
+                                    <span asp-validation-for="Order_Total_Cost" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <select asp-for="Payment_Status" class="form-select">
+                                        <option value="">Select Payment Status</option>
+                                        <option value="Pending">Pending</option>
+                                        <option value="Completed">Completed</option>
+                                        <option value="Failed">Failed</option>
+                                    </select>
+                                    <label asp-for="Payment_Status"></label>
+                                    <span asp-validation-for="Payment_Status" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-12">
+                                <h4 class="text-primary mt-4 mb-4">Shipping Information</h4>
+                            </div>
+
+                            <div class="col-12">
+                                <div class="form-floating mb-3">
+                                    <select asp-for="Shipping_Address" class="form-select">
+                                        <option value="">Select Warehouse Address</option>
+                                        <option value="Warehouse A - 123 Industrial Park, Chennai">Warehouse A - 123 Industrial Park, Chennai</option>
+                                        <option value="Warehouse B - 456 Tech Hub, Bangalore">Warehouse B - 456 Tech Hub, Bangalore</option>
+                                        <option value="Warehouse C - 789 Logistics Center, Mumbai">Warehouse C - 789 Logistics Center, Mumbai</option>
+                                        <option value="Warehouse D - 321 Distribution Hub, Delhi">Warehouse D - 321 Distribution Hub, Delhi</option>
+                                        <option value="Warehouse E - 654 Supply Chain Complex, Hyderabad">Warehouse E - 654 Supply Chain Complex, Hyderabad</option>
+                                    </select>
+                                    <label asp-for="Shipping_Address">Select Shipping Address</label>
+                                    <span asp-validation-for="Shipping_Address" class="text-danger"></span>
+                                </div>
+                            </div>
+
+
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input asp-for="Delivery_Expected_Date" class="form-control" type="date" />
+                                    <label asp-for="Delivery_Expected_Date"></label>
+                                    <span asp-validation-for="Delivery_Expected_Date" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <select asp-for="Shipmnt_Status" class="form-select">
+                                        <option value="">Select Shipment Status</option>
+                                        <option value="Processing">Processing</option>
+                                        <option value="Shipped">Shipped</option>
+                                        <option value="Out for Delivery">Out for Delivery</option>
+                                        <option value="Delivered">Delivered</option>
+                                    </select>
+                                    <label asp-for="Shipmnt_Status"></label>
+                                    <span asp-validation-for="Shipmnt_Status" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input asp-for="Warehouse_Name" class="form-control" />
+                                    <label asp-for="Warehouse_Name"></label>
+                                    <span asp-validation-for="Warehouse_Name" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="form-floating mb-3">
+                                    <input asp-for="Shipping_Company" class="form-control" />
+                                    <label asp-for="Shipping_Company"></label>
+                                    <span asp-validation-for="Shipping_Company" class="text-danger"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-5">
+                            <button type="submit" class="btn btn-primary btn-lg px-5 py-2 shadow-sm" onclick="redirectToSuccess()">
+                                Create Order
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-floating > label {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    .card {
+        transition: transform 0.2s;
+    }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+    .btn-primary {
+        transition: all 0.3s;
+    }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3) !important;
+        }
+
+</style>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,132 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Static Warehouse Network</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.24.0/cytoscape.min.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+        }
+
+        h1 {
+            text-align: center;
+            color: #343a40;
+            margin: 20px 0;
+            font-size: 24px;
+        }
+
+        #graph-container {
+            width: 90%;
+            height: 500px;
+            margin: 20px auto;
+            background: #ffffff;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .button-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 0 10px;
+            transition: background 0.3s ease;
+        }
+
+            button:hover {
+                background: #0056b3;
+            }
+    </style>
+</head>
+<body>
+    <h1>Static Warehouse Network</h1>
+    <div class="button-container">
+        <button onclick="addNode()">Add Warehouse</button>
+    </div>
+    <div id="graph-container"></div>
+
+    <script>
+        // Initialize Cytoscape
+        const cy = cytoscape({
+            container: document.getElementById('graph-container'),
+
+            elements: [
+                // Initial Nodes
+                { data: { id: 'WH1', label: 'Warehouse 1' }, position: { x: 100, y: 200 } },
+                { data: { id: 'WH2', label: 'Warehouse 2' }, position: { x: 300, y: 100 } },
+                { data: { id: 'WH3', label: 'Warehouse 3' }, position: { x: 500, y: 300 } },
+
+                // Initial Edges
+                { data: { source: 'WH1', target: 'WH2' } },
+                { data: { source: 'WH2', target: 'WH3' } },
+                { data: { source: 'WH3', target: 'WH1' } },
+            ],
+
+            style: [
+                {
+                    selector: 'node',
+                    style: {
+                        'background-color': '#343a40',
+                        'label': 'data(label)',
+                        'color': '#ffffff',
+                        'text-valign': 'center',
+                        'text-halign': 'center',
+                        'font-size': '14px',
+                        'width': '50px',
+                        'height': '50px',
+                        'border-width': '2px',
+                        'border-color': '#007bff',
+                    },
+                },
+                {
+                    selector: 'edge',
+                    style: {
+                        'width': 2,
+                        'line-color': '#6c757d',
+                        'target-arrow-color': '#6c757d',
+                        'target-arrow-shape': 'triangle',
+                        'curve-style': 'bezier',
+                    },
+                },
+            ],
+
+            layout: {
+                name: 'preset', // Keep nodes at specified positions
+            },
+
+            userPanningEnabled: true,  // Allow panning
+            autoungrabify: false, // Allow dragging nodes
+        });
+
+        // Counter for dynamically added warehouses
+        let warehouseCounter = 4;
+
+        function addNode() {
+            const newId = `WH${warehouseCounter}`;
+            const newLabel = `Warehouse ${warehouseCounter}`;
+
+            // Add new node at a random position
+            cy.add({
+                data: { id: newId, label: newLabel },
+                position: { x: Math.random() * 600, y: Math.random() * 400 } // Random position
+            });
+
+            warehouseCounter++;
+        }
+    </script>
+</body>
+</html>

@@ -7,6 +7,8 @@
     <DockerDefaultTargetOS>Windows</DockerDefaultTargetOS>
     <DockerfileContext>.</DockerfileContext>
     <Platforms>AnyCPU;ARM64</Platforms>
+    <OutputType>Exe</OutputType>
+    <StartupObject>Inventory.Program</StartupObject>
   </PropertyGroup>
 
   <ItemGroup>
