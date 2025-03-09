@@ -24,7 +24,7 @@ namespace Inventory.Controllers
             {
                 if (signUpModel.Password != signUpModel.ConfirmPassword)
                 {
-                    ModelState.AddModelError("ConfirmPassword", "Password and confirm password do not match.");
+                    ModelState.AddModelError("ConfirmPassword", "Password and Confirm Password Does not Match");
                     return View(signUpModel);
                 }
 
@@ -41,16 +41,22 @@ namespace Inventory.Controllers
                     ConfirmPassword = hashedPassword
                 };
 
-                // Call the InsertSignUp method to insert the data into the signup table
-                int result = signup.InsertSIGNUP();
+                // Call the InsertSIGNUP method to insert the data into the signup table
+                var result = signup.InsertSIGNUP();
 
-                if (result > 0)
+                if (result == -1)
+                {
+                    // User already exists
+                    ModelState.AddModelError("Email", "User already registered with this email.");
+                    return View(signUpModel);
+                }
+                else if (result > 0)
                 {
                     try
                     {
                         using (SmtpClient smtpClient = new SmtpClient("smtp.gmail.com", 587))
                         {
-                            smtpClient.UseDefaultCredentials = false; // ✅ Prevents conflicts
+                            smtpClient.UseDefaultCredentials = false;
                             smtpClient.EnableSsl = true;
                             smtpClient.Credentials = new NetworkCredential("fluxxinventorymanagement@gmail.com", "mply bbmm ochb zwdn");
 
@@ -59,7 +65,7 @@ namespace Inventory.Controllers
                             {
                                 From = new MailAddress("fluxxinventorymanagement@gmail.com"),
                                 Subject = "🎉 Welcome to Fluxx Inventory Management! 🎉",
-                                IsBodyHtml = true // ✅ Enables HTML formatting
+                                IsBodyHtml = true
                             };
 
                             // Add recipient
@@ -85,25 +91,6 @@ namespace Inventory.Controllers
             margin: auto;
             box-shadow: 0px 0px 10px #ddd;
         }}
-        .logo {{
-            width: 150px;
-            margin-bottom: 20px;
-        }}
-        .header {{
-            font-size: 24px;
-            color: #333;
-            font-weight: bold;
-        }}
-        .content {{
-            font-size: 16px;
-            color: #555;
-            margin-top: 10px;
-        }}
-        .footer {{
-            margin-top: 20px;
-            font-size: 14px;
-            color: #777;
-        }}
         .button {{
             background-color: #28a745;
             color: white;
@@ -120,44 +107,27 @@ namespace Inventory.Controllers
 </head>
 <body>
     <div class='container'>
-        <!-- Company Logo -->
-        <img src='https://yourwebsite.com/logo.png' alt='Fluxx Inventory' class='logo'>
-
-        <div class='header'>Welcome to Fluxx Inventory Management! 🎉</div>
-
-        <div class='content'>
-            <p>Dear <b>{signUpModel.FirstName} {signUpModel.LastName}</b>,</p>
-            <p>Thank you for registering with us! We're excited to have you on board.</p>
-            <p>Your account has been successfully created.</p>
-
-            <!-- Call-to-action button -->
-            <a href='https://yourwebsite.com/login' class='button'>Login to Your Account</a>
-        </div>
-
-        <div class='footer'>
-            Best regards, <br>
-            <b>Fluxx Inventory Management Team</b> <br>
-            📧 support@fluxxinventory.com | 📞 +91-9876543210
-        </div>
+        <h2>Welcome to Fluxx Inventory Management! 🎉</h2>
+        <p>Dear <b>{signUpModel.FirstName} {signUpModel.LastName}</b>,</p>
+        <p>Your account has been successfully created.</p>
+        <a href='https://yourwebsite.com/login' class='button'>Login to Your Account</a>
+        <p>Best regards,<br>Fluxx Inventory Management Team</p>
     </div>
 </body>
 </html>";
-
-
-                            mailMessage.To.Add(signUpModel.Email);
 
                             // Send the email
                             await smtpClient.SendMailAsync(mailMessage);
                         }
 
                         TempData["SuccessMessage"] = "Registration successful! Please check your email.";
-                        return RedirectToAction("Index");  // ✅ Redirect after success
+                        return RedirectToAction("Index");
                     }
                     catch (SmtpException smtpEx)
                     {
                         _logger.LogError($"SMTP Error: {smtpEx.StatusCode} - {smtpEx.Message}");
                         TempData["ErrorMessage"] = "Registration successful, but email could not be sent.";
-                        return RedirectToAction("Index");  // ✅ Still redirect
+                        return RedirectToAction("Index");
                     }
                     catch (Exception ex)
                     {
@@ -165,7 +135,6 @@ namespace Inventory.Controllers
                         ModelState.AddModelError("", "An error occurred while sending the email.");
                         return View(signUpModel);
                     }
-
                 }
                 else
                 {
@@ -175,6 +144,7 @@ namespace Inventory.Controllers
 
             return View(signUpModel);
         }
+
 
         public IActionResult Index()
         {

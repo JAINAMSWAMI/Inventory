@@ -78,7 +78,7 @@ namespace Inventory
                 // Default route for login page
                 endpoints.MapControllerRoute(
                     name: "default",
-                    pattern: "{controller=Distribution}/{action=ViewShipment}/{id?}");
+                    pattern: "{controller=SignUp}/{action=SignUp}/{id?}");
 
                 // Route for inventory-related actions
                
