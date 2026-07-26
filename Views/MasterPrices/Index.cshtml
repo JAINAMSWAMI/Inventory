@@ -1,0 +1,330 @@
+@model Inventory.Models.MasterPriceModel
+@{
+    ViewData["Title"] = "Master Prices";
+    Layout = "_Layout";
+    var openModal = ViewData["OpenPriceModal"] as bool? == true;
+}
+
+<div class="page-hero">
+    <div>
+        <h1>Master prices</h1>
+        <p>Set purchase and selling prices by product variant and quantity range.</p>
+    </div>
+    <button class="btn btn-fx" type="button" id="addMasterPrice">
+        <i class="fas fa-plus mr-2"></i>Add Product
+    </button>
+</div>
+
+<div class="fx-stats-row">
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon"><i class="fas fa-tags"></i></span>
+        <div><span class="fx-stat-value">@Model.Items.Count</span><span class="fx-stat-label">Price tiers</span></div>
+    </div>
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon info"><i class="fas fa-box"></i></span>
+        <div><span class="fx-stat-value">@Model.Items.Select(x => x.Electronic_Id).Distinct().Count()</span><span class="fx-stat-label">Products priced</span></div>
+    </div>
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon warning"><i class="fas fa-layer-group"></i></span>
+        <div><span class="fx-stat-value">@Model.Items.Select(x => x.Product_Category).Distinct().Count()</span><span class="fx-stat-label">Categories</span></div>
+    </div>
+</div>
+
+<div class="card fx-card">
+    <div class="fx-toolbar">
+        <div class="fx-search">
+            <i class="fas fa-search"></i>
+            <input id="priceSearch" class="form-control" type="search"
+                   placeholder="Search category, product or variant..." aria-label="Search master prices">
+        </div>
+        <span class="fx-result-count"><strong id="priceCount">@Model.Items.Count</strong> results</span>
+    </div>
+    <div class="card-body p-0">
+        @if (!Model.Items.Any())
+        {
+            <div class="fx-empty">
+                <i class="fas fa-tags d-block"></i>
+                <h5>No master prices yet</h5>
+                <p>Add the first quantity-based price for a product.</p>
+                <button class="btn btn-fx" type="button" data-open-master-price>Add Product</button>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table fx-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Product Category</th>
+                            <th>Product</th>
+                            <th>Product Variant</th>
+                            <th>From Quantity</th>
+                            <th>To Quantity</th>
+                            <th>Purchase Price</th>
+                            <th>Selling Price</th>
+                            <th class="text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="priceRows">
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr data-search="@($"{item.Product_Category} {item.Product_Name} {item.Product_Variant}".ToLowerInvariant())">
+                            <td><span class="badge badge-fx badge-fx-info">@item.Product_Category</span></td>
+                            <td>
+                                <div class="fx-entity">
+                                    <span class="fx-entity-icon"><i class="fas fa-box"></i></span>
+                                    <div>
+                                        <div class="fx-entity-title">@item.Product_Name</div>
+                                        <div class="fx-entity-subtitle">Product #@item.Electronic_Id</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>@item.Product_Variant</td>
+                            <td><span class="fx-qty-pill">@item.From_Quantity</span></td>
+                            <td><span class="fx-qty-pill">@item.To_Quantity</span></td>
+                            <td><span class="fx-price"><span class="fx-cur">&#8377;</span>@item.Purchase_Price.ToString("N2")</span></td>
+                            <td><span class="fx-price sell"><span class="fx-cur">&#8377;</span>@item.Selling_Price.ToString("N2")</span></td>
+                            <td class="text-right">
+                                <div class="fx-actions">
+                                    <button type="button" class="btn btn-fx-icon edit-price"
+                                            title="Edit master price" aria-label="Edit @item.Product_Name"
+                                            data-id="@item.Master_Price_Id"
+                                            data-category="@item.Product_Category"
+                                            data-product="@item.Electronic_Id"
+                                            data-variant="@item.Product_Variant"
+                                            data-from="@item.From_Quantity"
+                                            data-to="@item.To_Quantity"
+                                            data-purchase="@item.Purchase_Price.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)"
+                                            data-selling="@item.Selling_Price.ToString("0.00", System.Globalization.CultureInfo.InvariantCulture)">
+                                        <i class="fas fa-pen"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-fx-icon danger delete-price"
+                                            title="Delete master price" aria-label="Delete @item.Product_Name"
+                                            data-id="@item.Master_Price_Id"
+                                            data-name="@item.Product_Name">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            <div id="priceEmpty" class="fx-empty fx-filter-empty">
+                <i class="fas fa-search d-block"></i>
+                No master prices match your search.
+            </div>
+        }
+    </div>
+</div>
+
+<div class="modal fade fx-modal" id="masterPriceModal" tabindex="-1" role="dialog"
+     aria-labelledby="masterPriceTitle" aria-hidden="true" data-open="@(openModal ? "true" : "false")">
+    <div class="modal-dialog modal-dialog-centered modal-lg" role="document">
+        <div class="modal-content">
+            <form asp-action="Save" method="post" id="masterPriceForm">
+                @Html.AntiForgeryToken()
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title font-weight-bold" id="masterPriceTitle">Add master price</h5>
+                        <div class="small text-muted">Create a quantity-based purchase and selling price.</div>
+                    </div>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body p-4">
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+                    <input asp-for="Master_Price_Id" type="hidden">
+
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label asp-for="Product_Category"></label><span class="text-danger">*</span>
+                            <select asp-for="Product_Category" class="form-control" id="priceCategory">
+                                <option value="">Select product category</option>
+                                @foreach (var category in Model.Categories)
+                                {
+                                    <option value="@category">@category</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Product_Category" class="text-danger"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label asp-for="Electronic_Id"></label><span class="text-danger">*</span>
+                            <select asp-for="Electronic_Id" class="form-control" id="priceProduct">
+                                <option value="0">Select product</option>
+                                @foreach (var product in Model.Products)
+                                {
+                                    <option value="@product.Id" data-category="@product.Category" data-variant="@product.Variant">
+                                        @product.Name
+                                    </option>
+                                }
+                            </select>
+                            <span asp-validation-for="Electronic_Id" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label asp-for="Product_Variant"></label><span class="text-danger">*</span>
+                            <input asp-for="Product_Variant" class="form-control" id="priceVariant" placeholder="Model, size or variant">
+                            <span asp-validation-for="Product_Variant" class="text-danger"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label>Quantity range<span class="text-danger">*</span></label>
+                            <div class="form-row">
+                                <div class="col-6">
+                                    <input asp-for="From_Quantity" class="form-control" id="priceFrom" type="number" min="1" placeholder="From">
+                                </div>
+                                <div class="col-6">
+                                    <input asp-for="To_Quantity" class="form-control" id="priceTo" type="number" min="1" placeholder="To">
+                                </div>
+                            </div>
+                            <span asp-validation-for="From_Quantity" class="text-danger d-block"></span>
+                            <span asp-validation-for="To_Quantity" class="text-danger d-block"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label asp-for="Purchase_Price"></label><span class="text-danger">*</span>
+                            <div class="input-group">
+                                <div class="input-group-prepend"><span class="input-group-text">&#8377;</span></div>
+                                <input asp-for="Purchase_Price" class="form-control" id="pricePurchase" type="number" min="0" step="0.01">
+                            </div>
+                            <span asp-validation-for="Purchase_Price" class="text-danger"></span>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label asp-for="Selling_Price"></label><span class="text-danger">*</span>
+                            <div class="input-group">
+                                <div class="input-group-prepend"><span class="input-group-text">&#8377;</span></div>
+                                <input asp-for="Selling_Price" class="form-control" id="priceSelling" type="number" min="0" step="0.01">
+                            </div>
+                            <span asp-validation-for="Selling_Price" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-fx-outline" data-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-fx"><i class="fas fa-save mr-2"></i>Save price</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade fx-modal" id="deletePriceModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-body text-center p-4">
+                <span class="fx-modal-danger"><i class="fas fa-trash-alt"></i></span>
+                <h5 class="font-weight-bold">Delete master price?</h5>
+                <p class="text-muted mb-0"><span id="deletePriceName"></span> will be permanently removed.</p>
+            </div>
+            <div class="modal-footer justify-content-center">
+                <button type="button" class="btn btn-fx-outline" data-dismiss="modal">Keep price</button>
+                <form asp-action="Delete" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" id="deletePriceId">
+                    <button type="submit" class="btn btn-danger"><i class="fas fa-trash-alt mr-1"></i>Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    (function () {
+        const modal = $('#masterPriceModal');
+        const form = document.getElementById('masterPriceForm');
+        const id = document.getElementById('Master_Price_Id');
+        const category = document.getElementById('priceCategory');
+        const product = document.getElementById('priceProduct');
+        const variant = document.getElementById('priceVariant');
+        const fromQty = document.getElementById('priceFrom');
+        const toQty = document.getElementById('priceTo');
+        const purchase = document.getElementById('pricePurchase');
+        const selling = document.getElementById('priceSelling');
+        const title = document.getElementById('masterPriceTitle');
+
+        function filterProducts(selectedProduct) {
+            [...product.options].forEach(function (option, index) {
+                if (index === 0) return;
+                option.hidden = !!category.value && option.dataset.category !== category.value;
+            });
+            if (selectedProduct) product.value = String(selectedProduct);
+            else if (product.selectedOptions[0] && product.selectedOptions[0].hidden) product.value = '0';
+        }
+
+        function openNew() {
+            form.reset();
+            id.value = '0';
+            fromQty.value = '1';
+            toQty.value = '1';
+            title.textContent = 'Add master price';
+            filterProducts();
+            modal.modal('show');
+        }
+
+        category.addEventListener('change', function () { filterProducts(); });
+        product.addEventListener('change', function () {
+            const option = product.selectedOptions[0];
+            if (!option || !option.value || option.value === '0') return;
+            category.value = option.dataset.category || '';
+            variant.value = option.dataset.variant || '';
+            filterProducts(option.value);
+        });
+
+        document.getElementById('addMasterPrice').addEventListener('click', openNew);
+        document.querySelectorAll('[data-open-master-price]').forEach(x => x.addEventListener('click', openNew));
+
+        document.querySelectorAll('.edit-price').forEach(function (button) {
+            button.addEventListener('click', function () {
+                id.value = button.dataset.id;
+                category.value = button.dataset.category;
+                filterProducts(button.dataset.product);
+                variant.value = button.dataset.variant;
+                fromQty.value = button.dataset.from;
+                toQty.value = button.dataset.to;
+                purchase.value = button.dataset.purchase;
+                selling.value = button.dataset.selling;
+                title.textContent = 'Edit master price';
+                modal.modal('show');
+            });
+        });
+
+        document.querySelectorAll('.delete-price').forEach(function (button) {
+            button.addEventListener('click', function () {
+                document.getElementById('deletePriceId').value = button.dataset.id;
+                document.getElementById('deletePriceName').textContent = '\u201C' + button.dataset.name + '\u201D';
+                $('#deletePriceModal').modal('show');
+            });
+        });
+
+        const search = document.getElementById('priceSearch');
+        const rows = [...document.querySelectorAll('#priceRows tr')];
+        const count = document.getElementById('priceCount');
+        const empty = document.getElementById('priceEmpty');
+        if (search) {
+            search.addEventListener('input', function () {
+                const query = search.value.trim().toLowerCase();
+                let visible = 0;
+                rows.forEach(function (row) {
+                    const show = row.dataset.search.includes(query);
+                    row.style.display = show ? '' : 'none';
+                    if (show) visible++;
+                });
+                count.textContent = visible;
+                if (empty) empty.style.display = visible ? 'none' : 'block';
+            });
+        }
+
+        if (modal.data('open') === true) {
+            filterProducts(product.value);
+            modal.modal('show');
+        }
+    })();
+</script>
+}

@@ -1,0 +1,128 @@
+@model Inventory.Models.SettingsPageModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "User Setup";
+    ViewData["SettingsSection"] = "users";
+}
+
+@await Html.PartialAsync("_SettingsSubnav")
+
+<div class="page-hero fx-settings-hero d-flex justify-content-between align-items-start flex-wrap">
+    <div>
+        <a asp-action="Index" class="fx-settings-back"><i class="fas fa-arrow-left"></i> All settings</a>
+        <h1>User Setup</h1>
+        <p>Create users and assign roles.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="card fx-card fx-form-card h-100">
+            <div class="card-header">
+                <span class="fx-form-icon"><i class="fas fa-user-plus"></i></span>
+                <div><strong>Create user</strong><div class="small text-muted">Assign a role on create</div></div>
+            </div>
+            <div class="card-body">
+                <form asp-action="CreateUser" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label asp-for="NewUser.FirstName"></label>
+                            <input asp-for="NewUser.FirstName" class="form-control" name="FirstName" required>
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label asp-for="NewUser.LastName"></label>
+                            <input asp-for="NewUser.LastName" class="form-control" name="LastName" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="NewUser.Email"></label>
+                        <input asp-for="NewUser.Email" class="form-control" name="Email" type="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="NewUser.Password"></label>
+                        <input asp-for="NewUser.Password" class="form-control" name="Password" type="password" required>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="NewUser.Role_Id"></label>
+                        <select asp-for="NewUser.Role_Id" asp-items="ViewBag.RoleOptions" class="form-control" name="Role_Id"></select>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="NewUser.Phone"></label>
+                        <input asp-for="NewUser.Phone" class="form-control" name="Phone">
+                    </div>
+                    <button type="submit" class="btn btn-fx btn-block"><i class="fas fa-plus mr-1"></i> Create user</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8 mb-4">
+        <div class="card fx-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>All users</strong>
+                <span class="badge badge-fx badge-fx-info">@Model.Users.Count</span>
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.Users.Any())
+                {
+                    <div class="fx-empty py-5">No users found.</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table fx-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var u in Model.Users)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="font-weight-bold">@u.DisplayName</div>
+                                        <div class="small text-muted">@u.Email</div>
+                                    </td>
+                                    <td>
+                                        <form asp-action="AssignRole" method="post" class="form-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="userId" value="@u.User_Id" />
+                                            <select name="roleId" class="form-control form-control-sm" onchange="this.form.submit()">
+                                                @foreach (var r in Model.Roles)
+                                                {
+                                                    <option value="@r.Role_Id" selected="@(u.Role_Id == r.Role_Id)">@r.Role_Name</option>
+                                                }
+                                            </select>
+                                        </form>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-fx @(u.Status == "Active" ? "badge-fx-info" : "badge-secondary")">@u.Status</span>
+                                    </td>
+                                    <td class="text-right text-nowrap">
+                                        <form asp-action="SetStatus" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="userId" value="@u.User_Id" />
+                                            <input type="hidden" name="status" value="@u.Status" />
+                                            <button type="submit" class="btn btn-fx-icon" title="Toggle status"><i class="fas fa-toggle-on"></i></button>
+                                        </form>
+                                        <form asp-action="DeleteUser" method="post" class="d-inline" onsubmit="return confirm('Delete this user?');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="userId" value="@u.User_Id" />
+                                            <button type="submit" class="btn btn-fx-icon danger" title="Delete"><i class="fas fa-trash-alt"></i></button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

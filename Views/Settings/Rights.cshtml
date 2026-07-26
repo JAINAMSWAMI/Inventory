@@ -1,0 +1,83 @@
+@model Inventory.Models.SettingsPageModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Module Rights";
+    ViewData["SettingsSection"] = "rights";
+}
+
+@await Html.PartialAsync("_SettingsSubnav")
+
+<div class="page-hero fx-settings-hero">
+    <div>
+        <a asp-action="Index" class="fx-settings-back"><i class="fas fa-arrow-left"></i> All settings</a>
+        <h1>Module Rights</h1>
+        <p>Select which modules each role can see. Users must sign in again after changes.</p>
+    </div>
+</div>
+
+<div class="row">
+    @foreach (var r in Model.Roles)
+    {
+        var count = Model.Users.Count(u => u.Role_Id == r.Role_Id);
+        var isAdmin = string.Equals(r.Role_Name, "Admin", StringComparison.OrdinalIgnoreCase);
+        <div class="col-xl-6 mb-4">
+            <div class="card fx-card h-100">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <div class="fx-entity">
+                        <span class="fx-entity-icon"><i class="fas @(isAdmin ? "fa-user-shield" : "fa-user-tag")"></i></span>
+                        <div>
+                            <div class="fx-entity-title">@r.Role_Name</div>
+                            <div class="fx-entity-subtitle">@(r.Description ?? "Custom role")</div>
+                        </div>
+                    </div>
+                    <span class="badge badge-fx badge-fx-info">@count users</span>
+                </div>
+                <div class="card-body">
+                    <form asp-action="SaveRoleModules" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="roleId" value="@r.Role_Id">
+                        <div class="fx-role-modules">
+                            @foreach (var group in Model.Modules.GroupBy(m => m.Module_Group))
+                            {
+                                <div class="fx-module-group">
+                                    <div class="fx-module-group-title">@group.Key</div>
+                                    @foreach (var module in group)
+                                    {
+                                        var isDashboard = module.Module_Key == "Dashboard";
+                                        var allowed = isAdmin || r.ModuleKeys.Contains(module.Module_Key) || isDashboard;
+                                        var locked = isAdmin || isDashboard;
+                                        <label class="fx-module-toggle @(allowed ? "enabled" : "") @(locked ? "locked" : "")">
+                                            <input type="checkbox" name="moduleKeys" value="@module.Module_Key"
+                                                   checked="@allowed" disabled="@locked">
+                                            @if (allowed && locked && !isAdmin)
+                                            {
+                                                <input type="hidden" name="moduleKeys" value="@module.Module_Key">
+                                            }
+                                            <span class="fx-module-toggle-icon">
+                                                <i class="fas @(module.Icon_Class ?? "fa-cube")"></i>
+                                            </span>
+                                            <span>
+                                                <strong>@module.Module_Name</strong>
+                                                <small>@module.Description</small>
+                                            </span>
+                                        </label>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        @if (!isAdmin)
+                        {
+                            <button type="submit" class="btn btn-fx mt-3">
+                                <i class="fas fa-save mr-1"></i> Save rights for @r.Role_Name
+                            </button>
+                        }
+                        else
+                        {
+                            <p class="small text-muted mb-0 mt-3">Admin always has every module.</p>
+                        }
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+</div>

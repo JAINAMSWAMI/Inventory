@@ -1,0 +1,77 @@
+@model IEnumerable<Inventory.Models.InvoiceListItem>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Invoices";
+    string Inr(decimal n) => n.ToString("C4", System.Globalization.CultureInfo.GetCultureInfo("en-IN"));
+}
+
+<div class="page-hero d-flex justify-content-between align-items-start flex-wrap">
+    <div>
+        <h1>Invoices</h1>
+        <p>Sales invoices linked to customers and orders.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-fx"><i class="fas fa-plus mr-1"></i> New invoice</a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="card fx-card">
+        <div class="fx-empty py-5">No invoices yet. Create your first invoice.</div>
+    </div>
+}
+else
+{
+    <div class="fx-invoice-list">
+        @foreach (var inv in Model)
+        {
+            <div class="fx-invoice-row">
+                <div class="fx-invoice-col fx-invoice-main">
+                    <div class="fx-invoice-topline">
+                        <a class="fx-invoice-no" href="#">@inv.Invoice_No</a>
+                        <strong class="fx-invoice-title">@(inv.Project_Title ?? inv.Business_Name)</strong>
+                    </div>
+                    <div class="fx-invoice-meta">
+                        <i class="fas fa-user"></i> @inv.Business_Name
+                    </div>
+                    @if (!string.IsNullOrWhiteSpace(inv.First_Item_Label))
+                    {
+                        <div class="fx-invoice-meta">
+                            <i class="fas fa-tag"></i> @inv.First_Item_Label
+                        </div>
+                    }
+                </div>
+
+                <div class="fx-invoice-col fx-invoice-mid">
+                    @if (!string.IsNullOrWhiteSpace(inv.Linked_Order_No))
+                    {
+                        <div><a class="fx-invoice-link" href="#">@inv.Linked_Order_No</a></div>
+                    }
+                    <div class="text-muted small">
+                        @(inv.Business_Segment ?? "Sales")@(string.IsNullOrWhiteSpace(inv.Business_Category) ? "" : " · " + inv.Business_Category)
+                    </div>
+                    <div class="fx-invoice-badges">
+                        <span class="fx-badge @(inv.Payment_Status == "Paid" ? "ok" : inv.Payment_Status == "Partial" ? "warn" : "danger")">@inv.Payment_Status</span>
+                        <span class="fx-badge dark">@inv.Status</span>
+                    </div>
+                    <div class="fx-invoice-money">
+                        <div><span>Amount</span><strong>@Inr(inv.Amount)</strong></div>
+                        <div><span>Due Amt</span><strong>@Inr(inv.Due_Amount)</strong></div>
+                        <div><span>Received Amt</span><strong>@Inr(inv.Received_Amount)</strong></div>
+                    </div>
+                </div>
+
+                <div class="fx-invoice-col fx-invoice-side">
+                    <div class="fx-invoice-actions">
+                        <a asp-action="Create" class="btn btn-sm btn-fx-outline"><i class="fas fa-pen"></i> Edit</a>
+                        <button type="button" class="btn btn-sm btn-fx" disabled>Action ▾</button>
+                    </div>
+                    <div class="fx-invoice-meta"><i class="fas fa-users"></i> @(inv.Assignee ?? "—")</div>
+                    <div class="fx-invoice-meta"><i class="fas fa-calendar"></i> @inv.Invoice_Date.ToString("dd/MM/yyyy")</div>
+                    <div class="fx-invoice-foot">
+                        Created by @(inv.Created_By ?? "system") on @inv.Created_At.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

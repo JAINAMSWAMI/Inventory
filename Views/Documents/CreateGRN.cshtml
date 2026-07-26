@@ -1,0 +1,346 @@
+@model Inventory.Models.GRNModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Create GRN";
+    var catalogJson = ViewBag.ProductCatalogJson as string ?? "[]";
+    if (Model.LineItems == null || Model.LineItems.Count == 0)
+        Model.LineItems = new List<Inventory.Models.GRNLineItemModel> { new() };
+}
+
+<div class="fx-form-page">
+<div class="page-hero">
+    <div>
+        <h1>Goods Receipt Note</h1>
+        <p>Receive stock from a <strong>vendor</strong> or transfer in from another <strong>warehouse</strong>.</p>
+    </div>
+    <a asp-action="Index" class="btn btn-fx-outline"><i class="fas fa-arrow-left mr-2"></i>Documents</a>
+</div>
+
+<div class="fx-form-shell fx-form-shell-wide">
+    <div class="card fx-card fx-form-card">
+        <div class="card-header">
+            <span class="fx-form-icon"><i class="fas fa-file-import"></i></span>
+            <div><strong>Inbound GRN</strong><div class="small text-muted">Increases on-hand stock · multiple products per GRN</div></div>
+        </div>
+        <div class="card-body">
+            <form asp-action="CreateGRN" method="post" id="grnForm" autocomplete="off">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label asp-for="GRN_Date"></label>
+                        <input asp-for="GRN_Date" class="form-control" type="date">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Party_Type"></label>
+                        <select asp-for="Party_Type" class="form-control" id="Party_Type">
+                            <option value="Vendor">Vendor (purchase)</option>
+                            <option value="Warehouse">Warehouse (transfer in)</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Received_By"></label>
+                        <input asp-for="Received_By" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-row" id="vendorRow">
+                    <div class="form-group col-md-6">
+                        <label asp-for="Supplier_Id"></label>
+                        <select asp-for="Supplier_Id" asp-items="ViewBag.Suppliers" class="form-control"></select>
+                        <span asp-validation-for="Supplier_Id" class="text-danger"></span>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label asp-for="Invoice_No"></label>
+                        <input asp-for="Invoice_No" class="form-control">
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label asp-for="Invoice_Date"></label>
+                        <input asp-for="Invoice_Date" class="form-control" type="date">
+                    </div>
+                </div>
+
+                <div class="form-row" id="fromWhRow" style="display:none;">
+                    <div class="form-group col-md-6">
+                        <label asp-for="From_Warehouse_Id"></label>
+                        <select asp-for="From_Warehouse_Id" asp-items="ViewBag.Warehouses" class="form-control"></select>
+                        <span asp-validation-for="From_Warehouse_Id" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label asp-for="To_Warehouse_Id"></label>
+                        <select asp-for="To_Warehouse_Id" asp-items="ViewBag.Warehouses" class="form-control"></select>
+                        <span asp-validation-for="To_Warehouse_Id" class="text-danger"></span>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label asp-for="Vehicle_No"></label>
+                        <input asp-for="Vehicle_No" class="form-control">
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label asp-for="Gate_Entry_No"></label>
+                        <input asp-for="Gate_Entry_No" class="form-control">
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between mb-2 mt-3">
+                    <h6 class="text-uppercase text-muted font-weight-bold mb-0">Line items</h6>
+                    <button type="button" class="btn btn-fx-outline btn-sm" id="btnAddLine">
+                        <i class="fas fa-plus mr-1"></i> Add product
+                    </button>
+                </div>
+
+                <div class="table-responsive fx-line-table-wrap">
+                    <table class="table fx-line-table mb-2" id="grnLines">
+                        <thead>
+                            <tr>
+                                <th style="min-width:240px;">Product</th>
+                                <th style="width:100px;">Qty</th>
+                                <th style="width:120px;">Unit cost</th>
+                                <th style="width:140px;">Expiry</th>
+                                <th style="width:48px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @for (var i = 0; i < Model.LineItems.Count; i++)
+                        {
+                            <tr class="fx-line-row" data-index="@i">
+                                <td>
+                                    <div class="fx-ac">
+                                        <input type="hidden" name="LineItems[@i].Electronic_Id" class="fx-line-id" value="@(Model.LineItems[i].Electronic_Id > 0 ? Model.LineItems[i].Electronic_Id.ToString() : "")" />
+                                        <input type="text" name="LineItems[@i].Product_Label" class="form-control fx-line-search"
+                                               value="@Model.LineItems[i].Product_Label"
+                                               placeholder="Type to search product…" autocomplete="off" />
+                                        <div class="fx-ac-menu" hidden></div>
+                                    </div>
+                                    <span class="text-danger field-validation-valid" data-valmsg-for="LineItems[@i].Electronic_Id"></span>
+                                </td>
+                                <td>
+                                    <input type="text" name="LineItems[@i].Quantity" class="form-control fx-line-qty fx-num"
+                                           value="@(Model.LineItems[i].Quantity > 0 ? Model.LineItems[i].Quantity.ToString() : "")"
+                                           inputmode="numeric" pattern="[0-9]*" placeholder="0" autocomplete="off" />
+                                </td>
+                                <td>
+                                    <input type="text" name="LineItems[@i].Unit_Cost" class="form-control fx-num"
+                                           value="@(Model.LineItems[i].Unit_Cost?.ToString(System.Globalization.CultureInfo.InvariantCulture))"
+                                           inputmode="decimal" placeholder="0.00" autocomplete="off" />
+                                </td>
+                                <td>
+                                    <input type="date" name="LineItems[@i].Expiry_Date" class="form-control"
+                                           value="@(Model.LineItems[i].Expiry_Date?.ToString("yyyy-MM-dd"))" />
+                                </td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-fx-icon danger fx-line-remove" title="Remove line">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+                <p class="small text-muted mb-3">Search by brand or product name, then set quantity for each line.</p>
+
+                <div class="form-group">
+                    <label asp-for="Remarks"></label>
+                    <input asp-for="Remarks" class="form-control" placeholder="Optional notes for this GRN">
+                </div>
+
+                <div class="fx-form-actions">
+                    <a asp-action="Index" class="btn btn-fx-outline">Cancel</a>
+                    <button type="submit" class="btn btn-fx"><i class="fas fa-check mr-2"></i>Post GRN</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
+
+<template id="grnLineTemplate">
+    <tr class="fx-line-row" data-index="__i__">
+        <td>
+            <div class="fx-ac">
+                <input type="hidden" name="LineItems[__i__].Electronic_Id" class="fx-line-id" value="" />
+                <input type="text" name="LineItems[__i__].Product_Label" class="form-control fx-line-search"
+                       placeholder="Type to search product…" autocomplete="off" />
+                <div class="fx-ac-menu" hidden></div>
+            </div>
+        </td>
+        <td>
+            <input type="text" name="LineItems[__i__].Quantity" class="form-control fx-line-qty fx-num"
+                   inputmode="numeric" pattern="[0-9]*" placeholder="0" autocomplete="off" />
+        </td>
+        <td>
+            <input type="text" name="LineItems[__i__].Unit_Cost" class="form-control fx-num"
+                   inputmode="decimal" placeholder="0.00" autocomplete="off" />
+        </td>
+        <td>
+            <input type="date" name="LineItems[__i__].Expiry_Date" class="form-control" />
+        </td>
+        <td class="text-center">
+            <button type="button" class="btn btn-fx-icon danger fx-line-remove" title="Remove line">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </td>
+    </tr>
+</template>
+
+@section Scripts {
+<script>
+(function () {
+    const party = document.getElementById('Party_Type');
+    const vendorRow = document.getElementById('vendorRow');
+    const fromWhRow = document.getElementById('fromWhRow');
+    function syncParty() {
+        const isVendor = party.value === 'Vendor';
+        vendorRow.style.display = isVendor ? '' : 'none';
+        fromWhRow.style.display = isVendor ? 'none' : '';
+    }
+    party.addEventListener('change', syncParty);
+    syncParty();
+
+    const catalog = @Html.Raw(catalogJson);
+    const tbody = document.querySelector('#grnLines tbody');
+    const tpl = document.getElementById('grnLineTemplate').innerHTML;
+    const addBtn = document.getElementById('btnAddLine');
+
+    function reindex() {
+        Array.from(tbody.querySelectorAll('.fx-line-row')).forEach(function (row, i) {
+            row.dataset.index = String(i);
+            row.querySelectorAll('[name]').forEach(function (el) {
+                el.name = el.name.replace(/LineItems\[\d+]/, 'LineItems[' + i + ']');
+            });
+        });
+    }
+
+    function filterProducts(q) {
+        q = (q || '').trim().toLowerCase();
+        if (!q) return catalog.slice(0, 12);
+        return catalog.filter(function (p) {
+            return (p.label || '').toLowerCase().indexOf(q) >= 0
+                || (p.brand || '').toLowerCase().indexOf(q) >= 0
+                || (p.name || '').toLowerCase().indexOf(q) >= 0;
+        }).slice(0, 12);
+    }
+
+    function hideMenus(except) {
+        tbody.querySelectorAll('.fx-ac-menu').forEach(function (m) {
+            if (m !== except) {
+                m.hidden = true;
+                m.innerHTML = '';
+            }
+        });
+    }
+
+    function bindRow(row) {
+        const search = row.querySelector('.fx-line-search');
+        const hidden = row.querySelector('.fx-line-id');
+        const menu = row.querySelector('.fx-ac-menu');
+        const removeBtn = row.querySelector('.fx-line-remove');
+
+        function esc(s) {
+            return String(s == null ? '' : s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function renderMenu(items) {
+            if (!items.length) {
+                menu.innerHTML = '<div class="fx-ac-empty">No products found</div>';
+                menu.hidden = false;
+                return;
+            }
+            menu.innerHTML = items.map(function (p) {
+                return '<button type="button" class="fx-ac-option" data-id="' + p.id + '" data-label="' +
+                    esc(p.label) + '">' +
+                    '<span class="fx-ac-title">' + esc(p.brand) + ' · ' + esc(p.name) + '</span>' +
+                    '<span class="fx-ac-meta">Stock: ' + esc(p.stock) + '</span></button>';
+            }).join('');
+            menu.hidden = false;
+        }
+
+        search.addEventListener('focus', function () {
+            renderMenu(filterProducts(search.value));
+        });
+
+        search.addEventListener('input', function () {
+            hidden.value = '';
+            renderMenu(filterProducts(search.value));
+        });
+
+        search.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') hideMenus();
+        });
+
+        menu.addEventListener('mousedown', function (e) {
+            const opt = e.target.closest('.fx-ac-option');
+            if (!opt) return;
+            e.preventDefault();
+            hidden.value = opt.getAttribute('data-id');
+            search.value = opt.getAttribute('data-label');
+            hideMenus();
+            row.querySelector('.fx-line-qty').focus();
+        });
+
+        removeBtn.addEventListener('click', function () {
+            if (tbody.querySelectorAll('.fx-line-row').length <= 1) {
+                hidden.value = '';
+                search.value = '';
+                row.querySelectorAll('.fx-line-qty, .fx-num, input[type="date"]').forEach(function (inp) {
+                    if (!inp.classList.contains('fx-line-search')) inp.value = '';
+                });
+                return;
+            }
+            row.remove();
+            reindex();
+        });
+
+        row.querySelectorAll('.fx-num').forEach(function (inp) {
+            inp.addEventListener('input', function () {
+                var allowDecimal = inp.getAttribute('inputmode') === 'decimal';
+                var cleaned = allowDecimal
+                    ? inp.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1')
+                    : inp.value.replace(/[^0-9]/g, '');
+                if (inp.value !== cleaned) inp.value = cleaned;
+            });
+        });
+    }
+
+    tbody.querySelectorAll('.fx-line-row').forEach(bindRow);
+
+    addBtn.addEventListener('click', function () {
+        const i = tbody.querySelectorAll('.fx-line-row').length;
+        const html = tpl.replace(/__i__/g, String(i));
+        tbody.insertAdjacentHTML('beforeend', html);
+        bindRow(tbody.lastElementChild);
+        tbody.lastElementChild.querySelector('.fx-line-search').focus();
+    });
+
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.fx-ac')) hideMenus();
+    });
+
+    document.getElementById('grnForm').addEventListener('submit', function (e) {
+        const rows = Array.from(tbody.querySelectorAll('.fx-line-row'));
+        let ok = false;
+        rows.forEach(function (row) {
+            const id = row.querySelector('.fx-line-id').value;
+            const qty = parseInt(row.querySelector('.fx-line-qty').value, 10) || 0;
+            if (id && qty > 0) ok = true;
+        });
+        if (!ok) {
+            e.preventDefault();
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({ icon: 'warning', title: 'Add products', text: 'Select at least one product and quantity.', confirmButtonColor: '#0d9488' });
+            } else {
+                alert('Select at least one product and quantity.');
+            }
+        }
+    });
+})();
+</script>
+}

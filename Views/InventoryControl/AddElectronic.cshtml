@@ -1,279 +1,163 @@
-﻿@model ElectronicModel
+﻿@model Inventory.Models.ElectronicModel
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "Add New Product";
+    ViewData["Title"] = "Add Product";
 }
 
-<div class="container-fluid py-4">
-    <div class="card shadow-lg border-0 rounded-lg">
-        <div class="card-header bg-primary p-4">
-            <div class="d-flex justify-content-between align-items-center">
-                <h3 class="text-white m-0 font-weight-bold">
-                    <i class="fas fa-box-open me-2"></i>Add New Product
-                </h3>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-light" onclick="clearForm()">
-                        <i class="fas fa-redo-alt me-2"></i>Reset
-                    </button>
-                    <button class="btn btn-light" onclick="validateForm()">
-                        <i class="fas fa-check-circle me-2"></i>Validate
-                    </button>
-                </div>
-            </div>
+<div class="fx-form-page">
+<div class="page-hero">
+    <div>
+        <h1>Add product</h1>
+        <p>Full inventory master — identity, costing, reorder policy and default warehouse.</p>
+    </div>
+    <a asp-action="GetElectronicData" class="btn btn-fx-outline"><i class="fas fa-arrow-left mr-2"></i>Back</a>
+</div>
+
+<div class="fx-form-shell">
+    <div class="card fx-card fx-form-card">
+        <div class="card-header">
+            <span class="fx-form-icon"><i class="fas fa-box-open"></i></span>
+            <div><strong>Product master</strong><div class="small text-muted">InsertElectronic · receive later via GRN</div></div>
         </div>
+        <div class="card-body">
+            <form asp-action="AddElectronic" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-        <div class="card-body p-4">
-            <form asp-action="AddElectronic" method="post" class="needs-validation" novalidate>
-                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
-
-                <!-- Category Selection Section -->
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        <div class="form-floating">
-                            <select class="form-select shadow-sm" id="CategoryDropdown" name="CategoryDropdown" onchange="showForm()">
-                                <option value="">Select a category</option>
-                                <option value="Electronic">Electronic</option>
-                                <option value="Home Appliances">Home Appliances</option>
-                                <option value="Food Products">Food Products</option>
-                                <option value="Health">Health</option>
-                                <option value="Skin Care">Skin Care</option>
-                                <option value="FootWear">FootWear</option>
-                                <option value="Wearables">Wearables</option>
-                                <option value="Clothing & Accessories">Clothing & Accessories</option>
-                            </select>
-                            <label>
-                                <i class="fas fa-tags me-2"></i>Main Category
-                            </label>
-                        </div>
+                <h6 class="text-uppercase text-muted font-weight-bold mb-3">Identity</h6>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label asp-for="Electronic_Sub_Category"></label>
+                        <select asp-for="Electronic_Sub_Category" asp-items="ViewBag.Categories" class="form-control"></select>
+                        <span asp-validation-for="Electronic_Sub_Category" class="text-danger"></span>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Electronic_Supplier"></label>
+                        <select asp-for="Electronic_Supplier" asp-items="ViewBag.Suppliers" class="form-control"></select>
+                        <span asp-validation-for="Electronic_Supplier" class="text-danger"></span>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Electronic_Status"></label>
+                        <select asp-for="Electronic_Status" class="form-control">
+                            <option>Available</option>
+                            <option>Active</option>
+                            <option>Low Stock</option>
+                            <option>Out of Stock</option>
+                            <option>Discontinued</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label asp-for="Electronic_Brand"></label>
+                        <input asp-for="Electronic_Brand" class="form-control" placeholder="Brand">
+                        <span asp-validation-for="Electronic_Brand" class="text-danger"></span>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Electronic_Name"></label>
+                        <input asp-for="Electronic_Name" class="form-control" placeholder="Product name" autofocus>
+                        <span asp-validation-for="Electronic_Name" class="text-danger"></span>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Model_Number"></label>
+                        <input asp-for="Model_Number" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label asp-for="SKU"></label>
+                        <input asp-for="SKU" class="form-control" placeholder="SKU-001">
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label asp-for="Barcode"></label>
+                        <input asp-for="Barcode" class="form-control">
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label asp-for="Manufacturer"></label>
+                        <input asp-for="Manufacturer" class="form-control">
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label asp-for="HSN_Code"></label>
+                        <input asp-for="HSN_Code" class="form-control">
                     </div>
                 </div>
 
-                <div id="CategoryForm" style="display: none;" class="animate-fade">
-                    <div class="row g-4">
-                        <!-- Product Details Section -->
-                        <div class="col-md-6">
-                            <div class="form-floating shadow-sm">
-                                <select asp-for="Electronic_Sub_Category" class="form-select" id="categorySelect">
-                                    <option value="">Select sub-category</option>
-                                    <option value="Television and Home Entertainment">Television and Home Entertainment</option>
-                                    <option value="Mobiles">Mobiles</option>
-                                    <option value="Cameras">Cameras</option>
-                                    <option value="Computer and Accessories">Computer and Accessories</option>
-                                    <option value="Laptops">Laptops</option>
-                                    <option value="Wearable Technology">Wearable Technology</option>
-                                    <option value="Audio Equipment">Audio Equipment</option>
-                                </select>
-                                <label><i class="fas fa-sitemap me-2"></i>Sub Category</label>
-                            </div>
-                            <span asp-validation-for="Electronic_Sub_Category" class="text-danger small"></span>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="form-floating shadow-sm">
-                                <select asp-for="Electronic_Brand" class="form-select" id="brandSelect">
-                                    <option value="">Select brand</option>
-                                </select>
-                                <label><i class="fas fa-building me-2"></i>Brand</label>
-                            </div>
-                            <span asp-validation-for="Electronic_Brand" class="text-danger small"></span>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="form-floating shadow-sm">
-                                <input asp-for="Electronic_Name" class="form-control" placeholder="Product Name">
-                                <label><i class="fas fa-box me-2"></i>Product Name</label>
-                            </div>
-                            <span asp-validation-for="Electronic_Name" class="text-danger small"></span>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="form-floating shadow-sm">
-                                <input asp-for="Electronic_Price" class="form-control" type="number" step="0.01" placeholder="Price">
-                                <label><i class="fas fa-dollar-sign me-2"></i>Price</label>
-                            </div>
-                            <span asp-validation-for="Electronic_Price" class="text-danger small"></span>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="form-floating shadow-sm">
-                                <input asp-for="Electronic_CRStock" class="form-control" type="number" placeholder="Current Stock">
-                                <label><i class="fas fa-boxes me-2"></i>Current Stock</label>
-                            </div>
-                            <span asp-validation-for="Electronic_CRStock" class="text-danger small"></span>
-                        </div>
-
-                        <div class="col-md-6">
-                            <div class="form-floating shadow-sm">
-                                <input asp-for="Electronic_Warrenty_Period" class="form-control" type="date">
-                                <label><i class="fas fa-shield-alt me-2"></i>Warranty Period</label>
-                            </div>
-                            <span asp-validation-for="Electronic_Warrenty_Period" class="text-danger small"></span>
-                        </div>
-
-                        <div class="col-12">
-                            <div class="form-floating shadow-sm">
-                                <textarea asp-for="Electronic_Specs" class="form-control" style="height: 100px" placeholder="Specifications"></textarea>
-                                <label><i class="fas fa-list-ul me-2"></i>Specifications</label>
-                            </div>
-                            <span asp-validation-for="Electronic_Specs" class="text-danger small"></span>
-                        </div>
-
-                        <div class="col-12">
-                            <div class="form-floating shadow-sm">
-                                <input asp-for="Electronic_Supplier" class="form-control" placeholder="Supplier">
-                                <label><i class="fas fa-truck me-2"></i>Supplier</label>
-                            </div>
-                            <span asp-validation-for="Electronic_Supplier" class="text-danger small"></span>
-                        </div>
-
-                        <div class="col-12">
-                            <div class="card shadow-sm border-0 bg-light">
-                                <div class="card-body">
-                                    <label class="form-label mb-3"><i class="fas fa-toggle-on me-2"></i>Product Status</label>
-                                    <div class="d-flex gap-4">
-                                        <div class="form-check">
-                                            <input type="radio" id="radioActive" asp-for="Electronic_Status" value="Active" class="form-check-input">
-                                            <label class="form-check-label" for="radioActive">
-                                                <span class="badge bg-success rounded-pill px-3">Active</span>
-                                            </label>
-                                        </div>
-                                        <div class="form-check">
-                                            <input type="radio" id="radioInactive" asp-for="Electronic_Status" value="Inactive" class="form-check-input">
-                                            <label class="form-check-label" for="radioInactive">
-                                                <span class="badge bg-danger rounded-pill px-3">Inactive</span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <span asp-validation-for="Electronic_Status" class="text-danger small"></span>
-                                </div>
-                            </div>
-                        </div>
+                <h6 class="text-uppercase text-muted font-weight-bold mb-3 mt-2">Pricing &amp; stock policy</h6>
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label asp-for="Unit_Cost"></label>
+                        <input asp-for="Unit_Cost" class="form-control" type="number" step="0.01" min="0">
                     </div>
-
-                    <div class="text-end mt-4">
-                        <button type="submit" class="btn btn-primary px-4 py-2 shadow-sm">
-                            <i class="fas fa-save me-2"></i>Save Product
-                        </button>
+                    <div class="form-group col-md-3">
+                        <label asp-for="Electronic_Price"></label>
+                        <input asp-for="Electronic_Price" class="form-control" type="number" min="0">
+                        <span asp-validation-for="Electronic_Price" class="text-danger"></span>
                     </div>
+                    <div class="form-group col-md-3">
+                        <label asp-for="Tax_Percent"></label>
+                        <input asp-for="Tax_Percent" class="form-control" type="number" step="0.01" min="0" max="100">
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label asp-for="Unit_Of_Measure"></label>
+                        <select asp-for="Unit_Of_Measure" class="form-control">
+                            <option>PCS</option>
+                            <option>BOX</option>
+                            <option>SET</option>
+                            <option>KG</option>
+                            <option>LTR</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-3">
+                        <label asp-for="Electronic_CRStock"></label>
+                        <input asp-for="Electronic_CRStock" class="form-control" type="number" min="0">
+                        <span class="fx-field-hint">Opening only — use GRN for inbound.</span>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label asp-for="Reorder_Level"></label>
+                        <input asp-for="Reorder_Level" class="form-control" type="number" min="0">
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label asp-for="Min_Stock"></label>
+                        <input asp-for="Min_Stock" class="form-control" type="number" min="0">
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label asp-for="Max_Stock"></label>
+                        <input asp-for="Max_Stock" class="form-control" type="number" min="0">
+                    </div>
+                </div>
+
+                <h6 class="text-uppercase text-muted font-weight-bold mb-3 mt-2">Location &amp; notes</h6>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label asp-for="Default_Warehouse_Id"></label>
+                        <select asp-for="Default_Warehouse_Id" asp-items="ViewBag.Warehouses" class="form-control"></select>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Location_Bin"></label>
+                        <input asp-for="Location_Bin" class="form-control" placeholder="A-01-R2">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Electronic_Warrenty_Period"></label>
+                        <input asp-for="Electronic_Warrenty_Period" class="form-control" type="date">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Electronic_Specs"></label>
+                    <textarea asp-for="Electronic_Specs" class="form-control" rows="2" placeholder="Technical specifications"></textarea>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Notes"></label>
+                    <textarea asp-for="Notes" class="form-control" rows="2" placeholder="Internal notes"></textarea>
+                </div>
+
+                <div class="fx-form-actions">
+                    <a asp-action="GetElectronicData" class="btn btn-fx-outline">Cancel</a>
+                    <button type="submit" class="btn btn-fx"><i class="fas fa-check mr-2"></i>Save product</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-
-<style>
-    .card {
-        transition: all 0.2s ease;
-    }
-
-    .form-floating {
-        margin-bottom: 0.5rem;
-    }
-
-    .form-control, .form-select {
-        border: 1px solid #dee2e6;
-        padding: 0.75rem 1rem;
-        transition: all 0.2s ease;
-    }
-
-    .form-control:focus, .form-select:focus {
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-    }
-
-    .input-group-text {
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-    }
-
-    .badge {
-        font-weight: 500;
-        letter-spacing: 0.3px;
-    }
-
-    .form-check-input:checked {
-        background-color: #0d6efd;
-        border-color: #0d6efd;
-    }
-
-    .btn {
-        transition: all 0.2s ease;
-    }
-
-    .btn:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .animate-fade {
-        animation: fadeIn 0.3s ease-out;
-    }
-
-    keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    /* Custom scrollbar */
-    ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
-
-    ::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb {
-        background: #888;
-        border-radius: 4px;
-    }
-
-    ::-webkit-scrollbar-thumb:hover {
-        background: #555;
-    }
-</style>
-
-<script>
-    const categoryBrands = {
-        "Television and Home Entertainment": ["Samsung", "LG", "Sony", "XIAOMI", "OnePlus", "TCL", "Sansui", "Panasonic", "VU", "Hisense"],
-        "Mobiles": ["APPLE", "SAMSUNG", "ONEPLUS", "XIAOMI", "GOOGLE", "MOTOROLA", "REALME", "VIVO", "OPPO", "HUAWEI"],
-        "Cameras": ["NIKON", "CANON", "FUJIFILM", "PANASONIC"],
-        "Computer and Accessories": ["DELL", "HP", "LENOVO", "ASUS", "ACER", "ALIENWARE", "RAZER", "MICROSOFT", "LOGITECH", "PORTRONICS"],
-        "Laptops": ["DELL", "HP", "LENOVO", "ASUS", "ACER", "ALIENWARE", "RAZER", "MICROSOFT"],
-        "Wearable Technology": ["REALME", "SAMSUNG", "APPLE", "XIAOMI", "FASTTRACK"],
-        "Audio Equipment": ["BOSE", "SONY", "JBL", "Sennheiser", "Harman Kardon", "BOAT", "CMF", "OnePlus", "Realme", "Mivi", "Boult"]
-    };
-
-    function showForm() {
-        const dropdown = document.getElementById("CategoryDropdown");
-        const selectedCategory = dropdown.value;
-        const form = document.getElementById("CategoryForm");
-
-        if (selectedCategory === "Electronic" || selectedCategory === "Home Appliances") {
-            form.style.display = "block";
-        } else {
-            form.style.display = "none";
-        }
-    }
-
-    const categorySelect = document.getElementById('categorySelect');
-    const brandSelect = document.getElementById('brandSelect');
-
-    categorySelect.addEventListener('change', function () {
-        const selectedCategory = categorySelect.value;
-
-        brandSelect.innerHTML = '<option value="">Select Brand</option>';
-
-        if (categoryBrands[selectedCategory]) {
-            categoryBrands[selectedCategory].forEach(function (brand) {
-                const option = document.createElement('option');
-                option.value = brand;
-                option.text = brand;
-                brandSelect.appendChild(option);
-            });
-        }
-    });
-</script>
-
+</div>

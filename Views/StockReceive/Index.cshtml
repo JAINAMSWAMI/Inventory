@@ -1,0 +1,121 @@
+@model Inventory.Models.StockReceiveModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Stock Receive";
+}
+
+<div class="page-hero">
+    <div>
+        <h1>Stock lifecycle</h1>
+        <p>Inbound receipts and recent inventory movements.</p>
+    </div>
+    <div class="d-flex" style="gap:.5rem;">
+        <a class="btn btn-fx" asp-action="Create"><i class="fas fa-dolly mr-2"></i>Receive stock</a>
+        <a class="btn btn-fx-outline" asp-action="Movements"><i class="fas fa-history mr-2"></i>All movements</a>
+    </div>
+</div>
+
+<div class="fx-stats-row">
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon"><i class="fas fa-file-invoice"></i></span>
+        <div><span class="fx-stat-value">@Model.Items.Count</span><span class="fx-stat-label">Receipts</span></div>
+    </div>
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon info"><i class="fas fa-boxes"></i></span>
+        <div><span class="fx-stat-value">@Model.Items.Sum(x => x.TotalQty)</span><span class="fx-stat-label">Units received</span></div>
+    </div>
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon warning"><i class="fas fa-exchange-alt"></i></span>
+        <div><span class="fx-stat-value">@Model.Movements.Count</span><span class="fx-stat-label">Recent movements</span></div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-7 mb-4">
+        <div class="card fx-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>Stock receipts</strong>
+                <a asp-action="Create" class="small">Receive more</a>
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.Items.Any())
+                {
+                    <div class="fx-empty">
+                        <i class="fas fa-dolly d-block"></i>
+                        No receipts yet. Receive your first inbound shipment.
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table fx-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Receipt</th>
+                                    <th>Supplier / Warehouse</th>
+                                    <th>Qty</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @foreach (var item in Model.Items)
+                            {
+                                <tr>
+                                    <td>
+                                        <div class="fx-entity-title">@item.Receipt_No</div>
+                                        <div class="fx-entity-subtitle">@item.Receipt_Date.ToString("dd MMM yyyy") · @(item.Received_By ?? "")</div>
+                                        @if (!string.IsNullOrEmpty(item.Reference_No))
+                                        {
+                                            <div class="small text-muted">Ref: @item.Reference_No</div>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div>@(item.Supplier_Name ?? "—")</div>
+                                        <div class="small text-muted">@(item.Warehouse_Name ?? "—")</div>
+                                    </td>
+                                    <td><span class="badge badge-fx badge-fx-success">+@item.TotalQty</span></td>
+                                    <td><span class="badge badge-fx badge-fx-info">@item.Status</span></td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5 mb-4">
+        <div class="card fx-card">
+            <div class="card-header d-flex justify-content-between">
+                <strong>Latest movements</strong>
+                <a asp-action="Movements" class="small">View all</a>
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.Movements.Any())
+                {
+                    <div class="fx-empty py-4">No movements logged yet.</div>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                    @foreach (var m in Model.Movements.Take(8))
+                    {
+                        var inbound = m.QuantityDelta >= 0;
+                        <li class="list-group-item d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="font-weight-bold">@m.Electronic_Name</div>
+                                <div class="small text-muted">@(m.Movement_Type ?? "Movement") · @(m.Reference_No ?? m.Reason)</div>
+                                <div class="small text-muted">@m.Created_Date.ToString("dd MMM HH:mm")</div>
+                            </div>
+                            <span class="badge badge-fx @(inbound ? "badge-fx-success" : "badge-fx-danger")">
+                                @(inbound ? "+" : "")@m.QuantityDelta
+                            </span>
+                        </li>
+                    }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+</div>

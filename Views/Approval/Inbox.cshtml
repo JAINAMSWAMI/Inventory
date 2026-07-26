@@ -1,0 +1,70 @@
+@model IEnumerable<Inventory.Models.ApprovalInboxItem>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Approval Inbox";
+}
+
+<div class="page-hero">
+    <div>
+        <h1>Approval Inbox</h1>
+        <p>Records waiting for your approval. Rejected items never post to ledger.</p>
+    </div>
+</div>
+
+<div class="card fx-card">
+    <div class="card-body p-0">
+        @if (!Model.Any())
+        {
+            <div class="fx-empty py-5">No pending approvals.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table fx-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Form</th>
+                            <th>Record</th>
+                            <th>Level</th>
+                            <th>Requested by</th>
+                            <th>Requested at</th>
+                            <th>Remarks</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>@item.FormTypeName</td>
+                            <td>#@item.RecordId</td>
+                            <td>@item.ApprovalLevel</td>
+                            <td>@(item.RequestedByName ?? "—")</td>
+                            <td>@item.RequestedAt.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                            <td style="min-width:180px">
+                                <form asp-action="Approve" method="post" class="d-inline aw-action">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="ApprovalRequestId" value="@item.Id" />
+                                    <input name="Remarks" class="form-control form-control-sm mb-1" placeholder="Remarks (optional)" />
+                                    <button type="submit" class="btn btn-sm btn-fx">Approve</button>
+                                </form>
+                                <form asp-action="Reject" method="post" class="d-inline aw-action"
+                                      onsubmit="return confirm('Reject this record? It will not post to ledger.');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="ApprovalRequestId" value="@item.Id" />
+                                    <input type="hidden" name="Remarks" class="aw-reject-remarks" />
+                                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                                            onclick="this.form.querySelector('.aw-reject-remarks').value = this.closest('td').querySelector('[name=Remarks]')?.value || '';">
+                                        Reject
+                                    </button>
+                                </form>
+                            </td>
+                            <td></td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

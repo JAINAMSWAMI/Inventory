@@ -1,0 +1,81 @@
+@model Inventory.Models.StockReceiveModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Receive Stock";
+}
+
+<div class="page-hero">
+    <div>
+        <h1>Receive stock</h1>
+        <p>Inbound receipt increases on-hand quantity and logs an inventory movement.</p>
+    </div>
+    <a asp-action="Index" class="btn btn-fx-outline"><i class="fas fa-arrow-left mr-2"></i>Back to receipts</a>
+</div>
+
+<div class="fx-form-shell" style="max-width:860px;">
+    <div class="card fx-card fx-form-card">
+        <div class="card-header">
+            <span class="fx-form-icon"><i class="fas fa-dolly"></i></span>
+            <div><strong>Inbound receipt</strong><div class="small text-muted">InsertStockReceipt stored procedure</div></div>
+        </div>
+        <div class="card-body">
+            <form asp-action="Create" method="post">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label asp-for="Receipt_Date"></label>
+                        <input asp-for="Receipt_Date" type="date" class="form-control">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Supplier_Id"></label>
+                        <select asp-for="Supplier_Id" asp-items="ViewBag.Suppliers" class="form-control"></select>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Warehouse_Id"></label>
+                        <select asp-for="Warehouse_Id" asp-items="ViewBag.Warehouses" class="form-control"></select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-8">
+                        <label asp-for="Electronic_Id"></label>
+                        <select asp-for="Electronic_Id" asp-items="ViewBag.Products" class="form-control"></select>
+                        <span asp-validation-for="Electronic_Id" class="text-danger"></span>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Quantity"></label>
+                        <input asp-for="Quantity" type="number" min="1" class="form-control">
+                        <span asp-validation-for="Quantity" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label asp-for="Unit_Cost"></label>
+                        <input asp-for="Unit_Cost" type="number" step="0.01" min="0" class="form-control">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Reference_No"></label>
+                        <input asp-for="Reference_No" class="form-control" placeholder="PO / invoice no.">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Received_By"></label>
+                        <input asp-for="Received_By" class="form-control">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Notes"></label>
+                    <textarea asp-for="Notes" class="form-control" rows="2" placeholder="Optional receiving notes"></textarea>
+                </div>
+
+                <div class="fx-form-actions">
+                    <a asp-action="Index" class="btn btn-fx-outline">Cancel</a>
+                    <button type="submit" class="btn btn-fx"><i class="fas fa-check mr-2"></i>Post receipt</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

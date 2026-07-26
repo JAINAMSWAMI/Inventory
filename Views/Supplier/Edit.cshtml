@@ -1,0 +1,66 @@
+@model Inventory.Models.SupplierModel
+@{
+    ViewData["Title"] = "Edit Supplier";
+    Layout = "_Layout";
+}
+
+<div class="page-hero">
+    <div><h1>Edit supplier</h1><p>Update “@Model.Supplier_Name” and contact information.</p></div>
+    <a asp-action="Index" class="btn btn-fx-outline"><i class="fas fa-arrow-left mr-2"></i>Back to suppliers</a>
+</div>
+
+<div class="fx-form-shell">
+    <div class="card fx-card fx-form-card">
+        <div class="card-header">
+            <span class="fx-form-icon"><i class="fas fa-pen"></i></span>
+            <div><strong>Supplier information</strong><div class="small text-muted">Supplier ID #@Model.Supplier_Id</div></div>
+        </div>
+        <div class="card-body">
+            <form asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Supplier_Id">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label asp-for="Supplier_Name">Supplier name <span class="text-danger">*</span></label>
+                        <input asp-for="Supplier_Name" class="form-control" required autofocus>
+                        <span asp-validation-for="Supplier_Name" class="text-danger"></span>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label asp-for="Contact_Person">Contact person</label>
+                        <input asp-for="Contact_Person" class="form-control">
+                        <span asp-validation-for="Contact_Person" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label asp-for="Email">Email address</label>
+                        <input asp-for="Email" type="email" class="form-control" autocomplete="email">
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label asp-for="Phone">Phone number</label>
+                        <input asp-for="Phone" type="tel" class="form-control" autocomplete="tel">
+                        <span asp-validation-for="Phone" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Address">Business address</label>
+                    <textarea asp-for="Address" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Address" class="text-danger"></span>
+                </div>
+                <div class="form-group mb-0">
+                    <label asp-for="Status">Status</label>
+                    <select asp-for="Status" class="form-control">
+                        <option value="Active">Active — available for purchasing</option>
+                        <option value="Inactive">Inactive — currently unavailable</option>
+                    </select>
+                </div>
+                <div class="fx-form-actions">
+                    <a asp-action="Index" class="btn btn-fx-outline">Cancel</a>
+                    <button type="submit" class="btn btn-fx"><i class="fas fa-save mr-2"></i>Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

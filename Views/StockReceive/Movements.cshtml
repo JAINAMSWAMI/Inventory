@@ -1,0 +1,103 @@
+@model Inventory.Models.StockReceiveModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Stock Movements";
+}
+
+<div class="page-hero">
+    <div>
+        <h1>Stock movements</h1>
+        <p>Complete inbound / outbound inventory history.</p>
+    </div>
+    <div class="d-flex" style="gap:.5rem;">
+        <a class="btn btn-fx" asp-action="Create"><i class="fas fa-dolly mr-2"></i>Receive stock</a>
+        <a class="btn btn-fx-outline" asp-action="Index">Receipts</a>
+    </div>
+</div>
+
+<div class="card fx-card">
+    <div class="fx-toolbar">
+        <div class="fx-search">
+            <i class="fas fa-search"></i>
+            <input id="moveSearch" class="form-control" type="search" placeholder="Search product, type, reference...">
+        </div>
+        <select id="moveType" class="form-control fx-filter">
+            <option value="">All types</option>
+            <option value="inbound">Inbound</option>
+            <option value="outbound">Outbound</option>
+        </select>
+        <span class="fx-result-count"><strong id="moveCount">@Model.Movements.Count</strong> movements</span>
+    </div>
+    <div class="card-body p-0">
+        @if (!Model.Movements.Any())
+        {
+            <div class="fx-empty"><i class="fas fa-history d-block"></i>No movements recorded.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table fx-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>When</th>
+                            <th>Product</th>
+                            <th>Type</th>
+                            <th>Qty</th>
+                            <th>Warehouse</th>
+                            <th>Reference</th>
+                            <th>On hand</th>
+                        </tr>
+                    </thead>
+                    <tbody id="moveRows">
+                    @foreach (var m in Model.Movements)
+                    {
+                        var type = (m.Movement_Type ?? "").ToLowerInvariant();
+                        <tr data-search="@($"{m.Electronic_Name} {m.Movement_Type} {m.Reference_No} {m.Reason}".ToLowerInvariant())"
+                            data-type="@type">
+                            <td>@m.Created_Date.ToString("dd MMM yyyy HH:mm")</td>
+                            <td>
+                                <div class="fx-entity-title">@m.Electronic_Name</div>
+                                <div class="fx-entity-subtitle">@m.Electronic_Brand</div>
+                            </td>
+                            <td><span class="badge badge-fx @(m.QuantityDelta >= 0 ? "badge-fx-success" : "badge-fx-danger")">@(m.Movement_Type ?? "Movement")</span></td>
+                            <td>@(m.QuantityDelta >= 0 ? "+" : "")@m.QuantityDelta</td>
+                            <td>@(m.Warehouse_Name ?? "—")</td>
+                            <td>
+                                <div>@(m.Reference_No ?? "—")</div>
+                                <div class="small text-muted">@(m.Reason ?? "")</div>
+                            </td>
+                            <td>@m.CurrentStock</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            <div id="moveEmpty" class="fx-empty fx-filter-empty"><i class="fas fa-search d-block"></i>No movements match.</div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(function () {
+    const search = document.getElementById('moveSearch');
+    const type = document.getElementById('moveType');
+    const rows = [...document.querySelectorAll('#moveRows tr')];
+    const count = document.getElementById('moveCount');
+    const empty = document.getElementById('moveEmpty');
+    function filterRows() {
+        const q = search.value.trim().toLowerCase();
+        let visible = 0;
+        rows.forEach(row => {
+            const show = row.dataset.search.includes(q) && (!type.value || row.dataset.type === type.value);
+            row.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+        count.textContent = visible;
+        if (empty) empty.style.display = visible ? 'none' : 'block';
+    }
+    search.addEventListener('input', filterRows);
+    type.addEventListener('change', filterRows);
+})();
+</script>
+}

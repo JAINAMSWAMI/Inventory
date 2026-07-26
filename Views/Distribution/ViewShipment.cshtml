@@ -1,229 +1,156 @@
-﻿@model GetShipmentDetailsModel
+﻿@model Inventory.Models.GetShipmentDetailsModel
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "Get Shipment Details";
+    ViewData["Title"] = "Shipments";
+    var openCount = Model.Items.Count(x => !string.Equals(x.Shipmnt_Status, "Delivered", StringComparison.OrdinalIgnoreCase));
 }
 
-<div class="container-fluid py-4">
-    <div class="card shadow-lg border-0 rounded-lg">
-        <div class="card-header bg-primary p-4">
-            <div class="d-flex justify-content-between align-items-center">
-                <h3 class="text-white m-0 font-weight-bold">Shipment Details</h3>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-light" onclick="exportToExcel()">
-                        <i class="fas fa-file-excel me-2"></i>Export
-                    </button>
-                    <button class="btn btn-light" onclick="window.print()">
-                        <i class="fas fa-print me-2"></i>Print
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div class="card-body p-4">
-            <div class="table-responsive">
-                <table id="datatablesSimple" class="table table-hover border-secondary align-middle">
-                    <thead>
-                        <tr class="bg-light">
-                            <th class="py-3">Order No.</th>
-                            <th class="py-3">Ordered Date<br><small class="text-muted">(dd-mm-yy)</small></th>
-                            <th class="py-3">Expected Delivery<br><small class="text-muted">(dd-mm-yy)</small></th>
-                            <th class="py-3">Order Cost</th>
-                            <th class="py-3">Warehouse Name</th>
-                            <th class="py-3">Shipping Company</th>
-                            <th class="py-3">Tracking No.</th>
-                            <th class="py-3 text-center">Status</th>
-                            <th class="py-3 text-center">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var item in Model.Items)
-                        {
-                            <tr class="border-bottom">
-                                <td class="py-3">@item.Order_No</td>
-                                <td class="py-3">@item.Order_Date</td>
-                                <td class="py-3">@item.Delivery_Expected_Date</td>
-                                <td class="py-3">@item.Order_Total_Cost</td>
-                                <td class="py-3">@item.Warehouse_Name</td>
-                                <td class="py-3">@item.Shipping_Company</td>
-                                <td class="py-3 font-monospace">@item.Shipmnt_Tracking_No</td>
-                                <td class="py-3 text-center">
-                                    @{
-                                        var statusClass = item.Shipmnt_Status.ToLower() switch
-                                        {
-                                            "delivered" => "status-delivered",
-                                            "in transit" => "status-transit",
-                                            "pending" => "status-pending",
-                                            _ => "status-other"
-                                        };
-                                    }
-                                    <span class="status-badge @statusClass">@item.Shipmnt_Status</span>
-                                </td>
-                                <td class="py-3 text-center">
-                                    <a href="@Url.Action("Tracking", "Distribution", new { id = item.Order_No })" 
-                                       class="btn btn-primary btn-sm rounded-pill px-3 shadow-sm">
-                                        <i class="fas fa-map-marker-alt me-2"></i>Track
-                                    </a>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        </div>
+<div class="page-hero">
+    <div>
+        <h1>Shipments</h1>
+        <p>Full order lifecycle with customer, product and destination details.</p>
+    </div>
+    <div class="d-flex" style="gap:.5rem;">
+        <a class="btn btn-fx" asp-action="CreateOrder"><i class="fas fa-plus mr-2"></i>Create order</a>
+        <a class="btn btn-fx-outline" asp-action="Tracking"><i class="fas fa-search-location mr-2"></i>Track</a>
     </div>
 </div>
 
-<style>
-    .table th {
-        font-weight: 600;
-        color: #495057;
-    }
+<div class="fx-stats-row">
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon"><i class="fas fa-truck"></i></span>
+        <div><span class="fx-stat-value">@Model.Items.Count</span><span class="fx-stat-label">Total orders</span></div>
+    </div>
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon warning"><i class="fas fa-clock"></i></span>
+        <div><span class="fx-stat-value">@openCount</span><span class="fx-stat-label">In progress</span></div>
+    </div>
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon info"><i class="fas fa-rupee-sign"></i></span>
+        <div><span class="fx-stat-value">@Model.Items.Sum(x => x.Order_Total_Cost).ToString("N0")</span><span class="fx-stat-label">Order value</span></div>
+    </div>
+</div>
 
-    .table td {
-        color: #555;
-    }
+<div class="card fx-card">
+    <div class="fx-toolbar">
+        <div class="fx-search">
+            <i class="fas fa-search"></i>
+            <input id="shipSearch" class="form-control" type="search" placeholder="Search order, customer, tracking, city...">
+        </div>
+        <select id="shipStatus" class="form-control fx-filter">
+            <option value="">All statuses</option>
+            <option value="processing">Processing</option>
+            <option value="shipped">Shipped</option>
+            <option value="out for delivery">Out for Delivery</option>
+            <option value="delivered">Delivered</option>
+        </select>
+        <span class="fx-result-count"><strong id="shipCount">@Model.Items.Count</strong> shipments</span>
+    </div>
 
-    /* Status badge styles - smaller and more subtle */
-    .status-badge {
-        display: inline-block;
-        font-size: 10px;
-        padding: 2px 6px;
-        border-radius: 3px;
-        font-weight: 400;
-        letter-spacing: 0.2px;
-        text-transform: uppercase;
-        color: #000000 !important;
-        -webkit-text-fill-color: #000000;
-    }
-    
-    .status-delivered {
-        background-color: rgba(25, 135, 84, 0.15);
-        color: #155724;
-        border: 1px solid rgba(25, 135, 84, 0.2);
-    }
-    
-    .status-transit {
-        background-color: rgba(13, 110, 253, 0.15);
-        color: #0d6efd;
-        border: 1px solid rgba(13, 110, 253, 0.2);
-    }
-    
-    .status-pending {
-        background-color: rgba(255, 193, 7, 0.15);
-        color: #856404;
-        border: 1px solid rgba(255, 193, 7, 0.2);
-    }
-    
-    .status-other {
-        background-color: rgba(108, 117, 125, 0.15);
-        color: #6c757d;
-        border: 1px solid rgba(108, 117, 125, 0.2);
-    }
-
-    .btn-sm {
-        transition: all 0.3s;
-    }
-
-    .btn-sm:hover {
-        transform: translateY(-2px);
-    }
-
-    .table-hover tbody tr:hover {
-        background-color: rgba(13, 110, 253, 0.04);
-    }
-
-    /* Make the table display fully without horizontal scrolling */
-    .table {
-        width: 100%;
-        table-layout: fixed;
-    }
-    
-    /* Distribute column widths appropriately */
-    .table th:nth-child(1), 
-    .table td:nth-child(1) {
-        width: 10%;
-    }
-    
-    .table th:nth-child(2), 
-    .table td:nth-child(2),
-    .table th:nth-child(3), 
-    .table td:nth-child(3) {
-        width: 12%;
-    }
-    
-    .table th:nth-child(4), 
-    .table td:nth-child(4) {
-        width: 10%;
-    }
-    
-    .table th:nth-child(5), 
-    .table td:nth-child(5),
-    .table th:nth-child(6), 
-    .table td:nth-child(6) {
-        width: 13%;
-    }
-    
-    .table th:nth-child(7), 
-    .table td:nth-child(7) {
-        width: 12%;
-    }
-    
-    .table th:nth-child(8), 
-    .table td:nth-child(8),
-    .table th:nth-child(9), 
-    .table td:nth-child(9) {
-        width: 9%;
-    }
-    
-    /* Enable text wrapping for longer content */
-    .table th, 
-    .table td {
-        word-wrap: break-word;
-        overflow-wrap: break-word;
-    }
-
-    /* Custom scrollbar for table when needed on smaller screens */
-    media (max-width: 992px) {
-        .table-responsive {
-            overflow-x: auto;
+    <div class="card-body p-0">
+        @if (!Model.Items.Any())
+        {
+            <div class="fx-empty">
+                <i class="fas fa-truck d-block"></i>
+                <h5>No shipments yet</h5>
+                <p>Create an order to start the outbound lifecycle.</p>
+                <a class="btn btn-fx" asp-action="CreateOrder">Create order</a>
+            </div>
         }
-        
-        .table-responsive::-webkit-scrollbar {
-            height: 8px;
+        else
+        {
+            <div class="table-responsive">
+                <table class="table fx-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Order / Customer</th>
+                            <th>Product</th>
+                            <th>Destination</th>
+                            <th>Warehouse / Carrier</th>
+                            <th>Dates</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="shipRows">
+                    @foreach (var item in Model.Items)
+                    {
+                        var status = (item.Shipmnt_Status ?? "").ToLowerInvariant();
+                        var badge = status switch
+                        {
+                            "delivered" => "badge-fx-success",
+                            "shipped" or "out for delivery" => "badge-fx-info",
+                            "processing" => "badge-fx-warning",
+                            _ => "badge-fx-muted"
+                        };
+                        <tr data-search="@($"{item.Order_No} {item.Customer_Name} {item.Shipmnt_Tracking_No} {item.City_Name} {item.Product_Name}".ToLowerInvariant())"
+                            data-status="@status">
+                            <td>
+                                <div class="fx-entity-title">@item.Order_No</div>
+                                <div class="fx-entity-subtitle">@(item.Customer_Name ?? "—") · @(item.Customer_Phone ?? "")</div>
+                                <div class="small text-muted font-monospace">@item.Shipmnt_Tracking_No</div>
+                            </td>
+                            <td>
+                                <div>@(item.Product_Name ?? "—")</div>
+                                <div class="small text-muted">Qty: @item.Quantity</div>
+                            </td>
+                            <td>
+                                <div>@(item.City_Name ?? "—")@(string.IsNullOrEmpty(item.State_Name) ? "" : $", {item.State_Name}")</div>
+                                <div class="small text-muted text-truncate" style="max-width:180px;">@(item.Shipping_Address ?? "")</div>
+                            </td>
+                            <td>
+                                <div>@item.Warehouse_Name</div>
+                                <div class="small text-muted">@item.Shipping_Company</div>
+                            </td>
+                            <td>
+                                <div class="small">Ordered @item.Order_Date.ToString("dd MMM yyyy")</div>
+                                <div class="small text-muted">ETA @item.Delivery_Expected_Date.ToString("dd MMM yyyy")</div>
+                            </td>
+                            <td>₹@item.Order_Total_Cost.ToString("N0")</td>
+                            <td>
+                                <span class="badge badge-fx @badge">@item.Shipmnt_Status</span>
+                                @if (!string.IsNullOrEmpty(item.Order_Priority) && item.Order_Priority != "Normal")
+                                {
+                                    <div class="small mt-1"><span class="badge badge-fx badge-fx-danger">@item.Order_Priority</span></div>
+                                }
+                            </td>
+                            <td class="text-right">
+                                <a class="btn btn-sm btn-fx" asp-action="Tracking" asp-route-trackingNo="@item.Shipmnt_Tracking_No">
+                                    <i class="fas fa-map-marker-alt mr-1"></i>Track
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            <div id="shipEmpty" class="fx-empty fx-filter-empty"><i class="fas fa-search d-block"></i>No shipments match your filters.</div>
         }
-
-        .table-responsive::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-        }
-
-        .table-responsive::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 4px;
-        }
-
-        .table-responsive::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
-    }
-
-    /* Print styles */
-    media print {
-        .btn-sm {
-            display: none;
-        }
-        .card {
-            box-shadow: none !important;
-        }
-    }
-</style>
+    </div>
+</div>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-    <script>
-        function exportToExcel() {
-            // Add your Excel export logic here
-            alert('Export to Excel functionality can be implemented here');
-        }
-    </script>
+<script>
+(function () {
+    const search = document.getElementById('shipSearch');
+    const status = document.getElementById('shipStatus');
+    const rows = [...document.querySelectorAll('#shipRows tr')];
+    const count = document.getElementById('shipCount');
+    const empty = document.getElementById('shipEmpty');
+    function filterRows() {
+        const q = search.value.trim().toLowerCase();
+        let visible = 0;
+        rows.forEach(row => {
+            const show = row.dataset.search.includes(q) && (!status.value || row.dataset.status === status.value);
+            row.style.display = show ? '' : 'none';
+            if (show) visible++;
+        });
+        count.textContent = visible;
+        if (empty) empty.style.display = visible ? 'none' : 'block';
+    }
+    search.addEventListener('input', filterRows);
+    status.addEventListener('change', filterRows);
+})();
+</script>
 }

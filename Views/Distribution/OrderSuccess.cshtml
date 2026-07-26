@@ -1,15 +1,38 @@
-﻿<!-- Order Form -->
-<form id="orderForm">
-    <div class="text-center">
-        <button type="submit" class="btn btn-primary px-4">Submit</button>
-    </div>
-</form>
+﻿@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Order Created";
+    var orderNo = TempData["OrderNo"] as string;
+    var trackingNo = TempData["TrackingNo"] as string;
+}
 
-<!-- Success Message (Initially Hidden) -->
-<div id="successMessage" class="text-center" style="display: none;">
-    <h2>Order Placed Successfully!</h2>
-    <p>Your order has been processed successfully.</p>
-    <a href="javascript:void(0);" onclick="resetForm()">Place Another Order</a>
+<div class="page-hero">
+    <div>
+        <h1>Order placed</h1>
+        <p>Outbound order and shipment record created successfully.</p>
+    </div>
 </div>
 
-
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card fx-card text-center p-5">
+            <div class="fx-form-icon mx-auto mb-3" style="width:56px;height:56px;font-size:1.3rem;">
+                <i class="fas fa-check"></i>
+            </div>
+            <h3 class="font-weight-bold mb-2">All set</h3>
+            <p class="text-muted">Stock was reserved and a tracking number was generated.</p>
+            @if (!string.IsNullOrEmpty(orderNo))
+            {
+                <div class="mb-2"><span class="text-muted">Order</span><br><strong class="h5">@orderNo</strong></div>
+            }
+            @if (!string.IsNullOrEmpty(trackingNo))
+            {
+                <div class="mb-4"><span class="text-muted">Tracking</span><br><strong class="font-monospace">@trackingNo</strong></div>
+            }
+            <div class="d-flex justify-content-center" style="gap:.75rem;flex-wrap:wrap;">
+                <a class="btn btn-fx" asp-action="Tracking" asp-route-trackingNo="@trackingNo">Track shipment</a>
+                <a class="btn btn-fx-outline" asp-action="ViewShipment">View shipments</a>
+                <a class="btn btn-fx-outline" asp-action="CreateOrder">New order</a>
+            </div>
+        </div>
+    </div>
+</div>

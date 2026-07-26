@@ -1,0 +1,383 @@
+@model Inventory.Models.FinanceVoucherCreateModel
+@{
+    Layout = "_Layout";
+    var isExpense = ViewData["IsExpense"] as bool? == true;
+    ViewData["Title"] = isExpense ? "Book Expense" : "New Payment";
+}
+
+<div class="fx-form-page">
+    <div class="page-hero d-flex justify-content-between align-items-start flex-wrap">
+        <div>
+            <h1>@(isExpense ? "Expense Booking" : "Payment / Receipt")</h1>
+            <p>Type, party, amount, allocation, and documents — ledger posted on approve.</p>
+        </div>
+        <a asp-action="@(isExpense ? "Booking" : "Receipts")" class="btn btn-fx-outline">Back to list</a>
+    </div>
+
+    <div class="fx-form-shell fx-form-shell-wide">
+        <form asp-action="Create" method="post" enctype="multipart/form-data" id="voucherForm">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="card fx-card fx-form-card mb-3">
+                <div class="card-body">
+                    <div class="fx-inv-section-label">Type</div>
+                    <div class="fx-type-toggle" role="group">
+                        <label class="@(Model.PaymentType == Inventory.Models.PaymentEntryType.Payment ? "active" : "")">
+                            <input type="radio" asp-for="PaymentType" value="Payment" /> Payment
+                        </label>
+                        <label class="@(Model.PaymentType == Inventory.Models.PaymentEntryType.Settlement ? "active" : "")">
+                            <input type="radio" asp-for="PaymentType" value="Settlement" /> Settlement
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card fx-card fx-form-card mb-3">
+                <div class="card-body">
+                    <div class="fx-inv-section-label">Type of payment</div>
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label asp-for="BillingCompanyId"></label> <span class="text-danger">*</span>
+                            <select asp-for="BillingCompanyId" asp-items="ViewBag.BillingCompanies" class="form-control" required></select>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label asp-for="PaymentDate"></label> <span class="text-danger">*</span>
+                            <input asp-for="PaymentDate" type="datetime-local" class="form-control"
+                                   value="@Model.PaymentDate.ToString("yyyy-MM-ddTHH:mm")" required />
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label asp-for="PaymentModeId"></label> <span class="text-danger">*</span>
+                            <select asp-for="PaymentModeId" asp-items="ViewBag.PaymentModes" class="form-control" required></select>
+                        </div>
+                        <div class="form-group col-md-12">
+                            <label asp-for="Description"></label>
+                            <textarea asp-for="Description" class="form-control" rows="2"></textarea>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label asp-for="BusinessSegmentId"></label>
+                            <select asp-for="BusinessSegmentId" asp-items="ViewBag.BusinessSegments" class="form-control"></select>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label asp-for="BusinessCategoryId"></label>
+                            <select asp-for="BusinessCategoryId" asp-items="ViewBag.BusinessCategories" class="form-control"></select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card fx-card fx-form-card mb-3">
+                <div class="card-body">
+                    <div class="fx-inv-section-label">Payment from / to</div>
+                    <div class="form-row">
+                        <div class="form-group col-md-5">
+                            <label asp-for="PartyId"></label> <span class="text-danger">*</span>
+                            <div class="d-flex">
+                                <div class="fx-ac flex-grow-1">
+                                    <input type="hidden" asp-for="PartyId" id="PartyId" />
+                                    <input type="text" id="PartySearch" class="form-control" autocomplete="off"
+                                           placeholder="Search party / ledger…" />
+                                    <div class="fx-ac-menu" id="partyMenu" hidden></div>
+                                </div>
+                                <button type="button" class="btn btn-fx ml-2" data-toggle="modal" data-target="#partyModal">+ Add New</button>
+                            </div>
+                            <span class="fx-field-hint" id="partyHint">Select a party to load balance and open documents.</span>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label asp-for="PaymentAccountId"></label> <span class="text-danger">*</span>
+                            <select asp-for="PaymentAccountId" asp-items="ViewBag.PaymentAccounts" class="form-control" required></select>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>Party balance</label>
+                            <input type="text" id="PartyBalance" class="form-control" readonly value="—" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card fx-card fx-form-card mb-3">
+                <div class="card-body">
+                    <div class="fx-inv-section-label">Amount</div>
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label asp-for="PaymentAmount"></label> <span class="text-danger">*</span>
+                            <input asp-for="PaymentAmount" type="number" step="0.0001" min="0.0001" class="form-control fx-num" id="PaymentAmount" required />
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label asp-for="ReferenceNo"></label>
+                            <input asp-for="ReferenceNo" class="form-control" placeholder="Cheque / UTR / Txn ref" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card fx-card fx-form-card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>@(isExpense ? "Expense head allocation" : "Reference / allocation")</strong>
+                    <button type="button" class="btn btn-sm btn-fx" id="addAllocRow">+ Add New</button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table fx-table mb-0" id="allocTable">
+                            <thead>
+                                <tr>
+                                    @if (isExpense)
+                                    {
+                                        <th>Expense head</th>
+                                    }
+                                    else
+                                    {
+                                        <th>Order / Invoice</th>
+                                    }
+                                    <th>Total amount</th>
+                                    <th>Due amount</th>
+                                    <th>Allocated amount</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @if (isExpense)
+                            {
+                                for (var i = 0; i < Model.ExpenseAllocations.Count; i++)
+                                {
+                                    <tr class="alloc-row">
+                                        <td>
+                                            <select name="ExpenseAllocations[@i].ExpenseHeadId" asp-items="ViewBag.ExpenseHeads" class="form-control form-control-sm"></select>
+                                        </td>
+                                        <td><input name="ExpenseAllocations[@i].TotalAmount" class="form-control form-control-sm fx-num" type="number" step="0.0001" value="0" /></td>
+                                        <td><input name="ExpenseAllocations[@i].DueAmount" class="form-control form-control-sm fx-num" type="number" step="0.0001" value="0" /></td>
+                                        <td><input name="ExpenseAllocations[@i].AllocatedAmount" class="form-control form-control-sm fx-num alloc-amt" type="number" step="0.0001" value="@Model.ExpenseAllocations[i].AllocatedAmount" /></td>
+                                        <td><button type="button" class="btn btn-fx-icon danger remove-alloc">&times;</button></td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr class="alloc-row text-muted" id="allocEmpty"><td colspan="5" class="text-center py-3">Select a party to load open orders / invoices, or add a row.</td></tr>
+                            }
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-right font-weight-bold">Running total</td>
+                                    <td><strong id="allocTotal">0.0000</strong></td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-right font-weight-bold">Final amount (payment − allocated)</td>
+                                    <td><strong id="finalAmount">0.0000</strong></td>
+                                    <td></td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card fx-card fx-form-card mb-3">
+                <div class="card-body">
+                    <div class="fx-inv-section-label">Documents</div>
+                    <input asp-for="UploadDocuments" type="file" class="form-control-file" multiple />
+                    <span class="fx-field-hint">Multi-file upload stored against this voucher.</span>
+                </div>
+            </div>
+
+            <div class="fx-form-actions">
+                <a asp-action="@(isExpense ? "Booking" : "Receipts")" class="btn btn-fx-outline">Cancel</a>
+                <button type="submit" class="btn btn-fx">Submit</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@if (isExpense)
+{
+    <select id="expenseHeadTemplate" class="d-none" aria-hidden="true">
+        @foreach (SelectListItem h in ViewBag.ExpenseHeads)
+        {
+            <option value="@h.Value">@h.Text</option>
+        }
+    </select>
+}
+
+<div class="modal fade" id="partyModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content fx-modal">
+            <div class="modal-header">
+                <h5 class="modal-title">Add party</h5>
+                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Party name</label>
+                    <input id="newPartyName" class="form-control" />
+                </div>
+                <div class="form-group">
+                    <label>Type</label>
+                    <select id="newPartyType" class="form-control">
+                        <option>Customer</option><option>Vendor</option><option>Both</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input id="newPartyPhone" class="form-control" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-fx-outline" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-fx" id="savePartyBtn">Save party</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(() => {
+    const isExpense = @(isExpense ? "true" : "false");
+    const partyMenu = document.getElementById('partyMenu');
+    const partySearch = document.getElementById('PartySearch');
+    const partyId = document.getElementById('PartyId');
+    const esc = s => String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    let timer;
+
+    document.querySelectorAll('.fx-type-toggle input').forEach(r => {
+        r.addEventListener('change', () => {
+            document.querySelectorAll('.fx-type-toggle label').forEach(l => l.classList.remove('active'));
+            r.closest('label').classList.add('active');
+        });
+    });
+
+    function recalc() {
+        let total = 0;
+        document.querySelectorAll('.alloc-amt').forEach(el => total += parseFloat(el.value || '0') || 0);
+        document.getElementById('allocTotal').textContent = total.toFixed(4);
+        const pay = parseFloat(document.getElementById('PaymentAmount').value || '0') || 0;
+        document.getElementById('finalAmount').textContent = (pay - total).toFixed(4);
+        document.getElementById('finalAmount').style.color = (pay - total) < -0.0001 ? '#b91c1c' : '';
+    }
+    document.getElementById('PaymentAmount').addEventListener('input', recalc);
+    document.getElementById('allocTable').addEventListener('input', e => {
+        if (e.target.classList.contains('alloc-amt')) recalc();
+    });
+
+    partySearch.addEventListener('input', () => {
+        clearTimeout(timer);
+        const q = partySearch.value.trim();
+        if (q.length < 2) { partyMenu.hidden = true; return; }
+        timer = setTimeout(() => {
+            fetch('@Url.Action("SearchParties", "Payment")?q=' + encodeURIComponent(q))
+                .then(r => r.json()).then(res => {
+                    const rows = res.items || [];
+                    if (!rows.length) {
+                        partyMenu.innerHTML = '<div class="fx-ac-empty">No parties found</div>';
+                        partyMenu.hidden = false; return;
+                    }
+                    partyMenu.innerHTML = rows.map(p =>
+                        `<button type="button" class="fx-ac-option" data-id="${p.partyId}" data-name="${esc(p.partyName)}">
+                            <span class="fx-ac-title">${esc(p.partyName)}</span>
+                            <span class="fx-ac-meta">${esc(p.partyType||'')} ${esc(p.phone||'')}</span>
+                         </button>`).join('');
+                    partyMenu.hidden = false;
+                });
+        }, 200);
+    });
+
+    partyMenu.addEventListener('click', e => {
+        const opt = e.target.closest('.fx-ac-option');
+        if (!opt) return;
+        partyId.value = opt.dataset.id;
+        partySearch.value = opt.dataset.name;
+        partyMenu.hidden = true;
+        loadParty(opt.dataset.id);
+    });
+
+    function loadParty(id) {
+        fetch('@Url.Action("PartyBalance", "Payment")?partyId=' + id)
+            .then(r => r.json()).then(res => {
+                document.getElementById('PartyBalance').value = res.display || '—';
+            });
+        if (isExpense) return;
+        fetch('@Url.Action("PartyDocuments", "Payment")?partyId=' + id)
+            .then(r => r.json()).then(res => {
+                const tbody = document.querySelector('#allocTable tbody');
+                tbody.innerHTML = '';
+                (res.items || []).forEach((doc, i) => {
+                    tbody.insertAdjacentHTML('beforeend', allocRowHtml(i, doc));
+                });
+                if (!(res.items||[]).length) {
+                    tbody.innerHTML = '<tr class="alloc-row"><td colspan="5" class="text-center text-muted py-3">No open documents. Use + Add New.</td></tr>';
+                }
+                recalc();
+            });
+    }
+
+    function allocRowHtml(i, doc) {
+        if (isExpense) {
+            const tpl = document.getElementById('expenseHeadTemplate');
+            const opts = tpl ? tpl.innerHTML : '';
+            return `<tr class="alloc-row">
+                <td><select name="ExpenseAllocations[${i}].ExpenseHeadId" class="form-control form-control-sm">${opts}</select></td>
+                <td><input name="ExpenseAllocations[${i}].TotalAmount" class="form-control form-control-sm fx-num" type="number" step="0.0001" value="0" /></td>
+                <td><input name="ExpenseAllocations[${i}].DueAmount" class="form-control form-control-sm fx-num" type="number" step="0.0001" value="0" /></td>
+                <td><input name="ExpenseAllocations[${i}].AllocatedAmount" class="form-control form-control-sm fx-num alloc-amt" type="number" step="0.0001" value="0" /></td>
+                <td><button type="button" class="btn btn-fx-icon danger remove-alloc">&times;</button></td></tr>`;
+        }
+        doc = doc || { orderId:'', documentType:'Invoice', totalAmount:0, dueAmount:0 };
+        return `<tr class="alloc-row">
+            <td>
+                <input type="hidden" name="Allocations[${i}].DocumentType" value="${esc(doc.documentType||'Invoice')}" />
+                <input name="Allocations[${i}].OrderId" class="form-control form-control-sm" value="${esc(doc.orderId||'')}" />
+            </td>
+            <td><input name="Allocations[${i}].TotalAmount" class="form-control form-control-sm fx-num" type="number" step="0.0001" value="${doc.totalAmount||0}" readonly /></td>
+            <td><input name="Allocations[${i}].DueAmount" class="form-control form-control-sm fx-num" type="number" step="0.0001" value="${doc.dueAmount||0}" readonly /></td>
+            <td><input name="Allocations[${i}].AllocatedAmount" class="form-control form-control-sm fx-num alloc-amt" type="number" step="0.0001" value="${doc.dueAmount||0}" /></td>
+            <td><button type="button" class="btn btn-fx-icon danger remove-alloc">&times;</button></td></tr>`;
+    }
+
+    document.getElementById('addAllocRow').addEventListener('click', () => {
+        const tbody = document.querySelector('#allocTable tbody');
+        const empty = document.getElementById('allocEmpty');
+        if (empty) empty.remove();
+        const i = tbody.querySelectorAll('tr.alloc-row').length;
+        tbody.insertAdjacentHTML('beforeend', allocRowHtml(i, null));
+        reindex();
+        recalc();
+    });
+
+    document.getElementById('allocTable').addEventListener('click', e => {
+        const btn = e.target.closest('.remove-alloc');
+        if (!btn) return;
+        btn.closest('tr').remove();
+        reindex();
+        recalc();
+    });
+
+    function reindex() {
+        [...document.querySelectorAll('#allocTable tbody tr.alloc-row')].forEach((tr, i) => {
+            tr.querySelectorAll('[name]').forEach(el => {
+                el.name = el.name.replace(/\[\d+\]/, `[${i}]`);
+            });
+        });
+    }
+
+    document.getElementById('savePartyBtn').addEventListener('click', () => {
+        const fd = new FormData();
+        fd.append('PartyName', document.getElementById('newPartyName').value);
+        fd.append('PartyType', document.getElementById('newPartyType').value);
+        fd.append('Phone', document.getElementById('newPartyPhone').value);
+        fd.append('__RequestVerificationToken', document.querySelector('input[name="__RequestVerificationToken"]').value);
+        fetch('@Url.Action("CreateParty", "Payment")', { method:'POST', body: fd })
+            .then(r => r.json()).then(res => {
+                if (!res.ok) { alert(res.error || 'Failed'); return; }
+                partyId.value = res.partyId;
+                partySearch.value = res.partyName;
+                $('#partyModal').modal('hide');
+                loadParty(res.partyId);
+            });
+    });
+
+    document.addEventListener('click', e => { if (!e.target.closest('.fx-ac')) partyMenu.hidden = true; });
+    recalc();
+})();
+</script>
+}

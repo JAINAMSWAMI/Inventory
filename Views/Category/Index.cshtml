@@ -1,0 +1,150 @@
+@model Inventory.Models.CategoryModel
+@{
+    ViewData["Title"] = "Categories";
+    Layout = "_Layout";
+    var activeCount = Model.Items.Count(x => x.Category_Status == "Active");
+}
+
+<div class="page-hero">
+    <div>
+        <h1>Product categories</h1>
+        <p>Keep your catalogue structured and easy to navigate.</p>
+    </div>
+    <a class="btn btn-fx" asp-action="Create">
+        <i class="fas fa-plus mr-2"></i>Add category
+    </a>
+</div>
+
+<div class="fx-stats-row">
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon"><i class="fas fa-tags"></i></span>
+        <div><span class="fx-stat-value">@Model.Items.Count</span><span class="fx-stat-label">Total categories</span></div>
+    </div>
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon info"><i class="fas fa-check-circle"></i></span>
+        <div><span class="fx-stat-value">@activeCount</span><span class="fx-stat-label">Active</span></div>
+    </div>
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon warning"><i class="fas fa-pause-circle"></i></span>
+        <div><span class="fx-stat-value">@(Model.Items.Count - activeCount)</span><span class="fx-stat-label">Inactive</span></div>
+    </div>
+</div>
+
+<div class="card fx-card">
+    <div class="fx-toolbar">
+        <div class="fx-search">
+            <i class="fas fa-search"></i>
+            <input id="categorySearch" class="form-control" type="search"
+                   placeholder="Search categories..." aria-label="Search categories">
+        </div>
+        <select id="categoryStatus" class="form-control fx-filter" aria-label="Filter by status">
+            <option value="">All statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+        </select>
+        <span class="fx-result-count"><strong id="categoryCount">@Model.Items.Count</strong> results</span>
+    </div>
+
+    <div class="card-body p-0">
+        @if (!Model.Items.Any())
+        {
+            <div class="fx-empty">
+                <i class="fas fa-tags d-block"></i>
+                <h5>No categories yet</h5>
+                <p>Create your first category to organize the product catalogue.</p>
+                <a class="btn btn-fx" asp-action="Create">Add category</a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table fx-table mb-0">
+                    <thead>
+                        <tr><th>Category</th><th>Description</th><th>Status</th><th>Created</th><th class="text-right">Actions</th></tr>
+                    </thead>
+                    <tbody id="categoryRows">
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr data-search="@($"{item.Category_Type} {item.Category_Description}".ToLowerInvariant())"
+                            data-status="@item.Category_Status?.ToLowerInvariant()">
+                            <td>
+                                <div class="fx-entity">
+                                    <span class="fx-entity-icon"><i class="fas fa-tag"></i></span>
+                                    <div>
+                                        <div class="fx-entity-title">@item.Category_Type</div>
+                                        <div class="fx-entity-subtitle">ID #@item.Category_Id</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>@(string.IsNullOrWhiteSpace(item.Category_Description) ? "No description" : item.Category_Description)</td>
+                            <td><span class="badge badge-fx @(item.Category_Status == "Active" ? "badge-fx-success" : "badge-fx-muted")">@item.Category_Status</span></td>
+                            <td>@item.Category_Added_Date.ToString("dd MMM yyyy")</td>
+                            <td class="text-right">
+                                <div class="fx-actions">
+                                    <a class="btn btn-fx-icon" asp-action="Edit" asp-route-id="@item.Category_Id"
+                                       title="Edit category" aria-label="Edit @item.Category_Type"><i class="fas fa-pen"></i></a>
+                                    <button class="btn btn-fx-icon danger" type="button" data-toggle="modal"
+                                            data-target="#deleteCategory-@item.Category_Id" title="Delete category"
+                                            aria-label="Delete @item.Category_Type"><i class="fas fa-trash-alt"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            <div id="categoryEmpty" class="fx-empty fx-filter-empty">
+                <i class="fas fa-search d-block"></i>
+                No categories match your filters.
+            </div>
+        }
+    </div>
+</div>
+
+@foreach (var item in Model.Items)
+{
+    <div class="modal fade fx-modal" id="deleteCategory-@item.Category_Id" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-body text-center p-4">
+                    <span class="fx-modal-danger"><i class="fas fa-trash-alt"></i></span>
+                    <h5 class="font-weight-bold">Delete category?</h5>
+                    <p class="text-muted mb-0">“@item.Category_Type” will be permanently removed.</p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-fx-outline" data-dismiss="modal">Keep category</button>
+                    <form asp-action="Delete" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@item.Category_Id">
+                        <button type="submit" class="btn btn-danger"><i class="fas fa-trash-alt mr-1"></i>Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+<script>
+    (function () {
+        const search = document.getElementById('categorySearch');
+        const status = document.getElementById('categoryStatus');
+        const rows = [...document.querySelectorAll('#categoryRows tr')];
+        const count = document.getElementById('categoryCount');
+        const empty = document.getElementById('categoryEmpty');
+        function filterRows() {
+            const query = search.value.trim().toLowerCase();
+            let visible = 0;
+            rows.forEach(row => {
+                const show = row.dataset.search.includes(query) && (!status.value || row.dataset.status === status.value);
+                row.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
+            count.textContent = visible;
+            if (empty) empty.style.display = visible ? 'none' : 'block';
+        }
+        search.addEventListener('input', filterRows);
+        status.addEventListener('change', filterRows);
+    })();
+</script>
+}

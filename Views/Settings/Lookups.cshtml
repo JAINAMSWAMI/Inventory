@@ -1,0 +1,220 @@
+@model Inventory.Models.SettingsPageModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Lookups";
+    ViewData["SettingsSection"] = "lookups";
+    var tab = Model.Lookups.ActiveTab ?? "values";
+    var selectedId = Model.Lookups.SelectedCategoryId;
+    var items = selectedId.HasValue
+        ? Model.Lookups.Items.Where(i => i.Category_Id == selectedId.Value).ToList()
+        : Model.Lookups.Items;
+}
+
+@await Html.PartialAsync("_SettingsSubnav")
+
+<div class="page-hero fx-settings-hero">
+    <div>
+        <a asp-action="Index" class="fx-settings-back"><i class="fas fa-arrow-left"></i> All settings</a>
+        <h1>Lookups</h1>
+        <p>Dropdown values and location masters. Deactivated values disappear from this list and from forms.</p>
+    </div>
+</div>
+
+<ul class="nav nav-pills fx-settings-tabs mb-4">
+    <li class="nav-item">
+        <a class="nav-link @(tab == "values" ? "active" : "")" asp-action="Lookups" asp-route-tab="values">Dropdown values</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(tab == "location" ? "active" : "")" asp-action="Lookups" asp-route-tab="location">Locations</a>
+    </li>
+</ul>
+
+@if (tab == "location")
+{
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card fx-card fx-form-card mb-4">
+                <div class="card-header"><strong>Add state</strong></div>
+                <div class="card-body">
+                    <form asp-action="CreateState" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="form-group">
+                            <label asp-for="Lookups.NewState.State_Name"></label>
+                            <input asp-for="Lookups.NewState.State_Name" class="form-control" name="State_Name" required>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Lookups.NewState.State_Code"></label>
+                            <input asp-for="Lookups.NewState.State_Code" class="form-control" name="State_Code">
+                        </div>
+                        <button type="submit" class="btn btn-fx btn-block">Add state</button>
+                    </form>
+                </div>
+            </div>
+            <div class="card fx-card fx-form-card">
+                <div class="card-header"><strong>Add city</strong></div>
+                <div class="card-body">
+                    <form asp-action="CreateCity" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="form-group">
+                            <label asp-for="Lookups.NewCity.State_Id"></label>
+                            <select asp-for="Lookups.NewCity.State_Id" asp-items="ViewBag.StateOptions" class="form-control" name="State_Id"></select>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Lookups.NewCity.City_Name"></label>
+                            <input asp-for="Lookups.NewCity.City_Name" class="form-control" name="City_Name" required>
+                        </div>
+                        <button type="submit" class="btn btn-fx btn-block">Add city</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8 mb-4">
+            <div class="card fx-card mb-4">
+                <div class="card-header"><strong>States</strong> <span class="badge badge-fx badge-fx-info">@Model.Lookups.States.Count</span></div>
+                <div class="card-body p-0" style="max-height:220px;overflow:auto;">
+                    <table class="table fx-table mb-0">
+                        <thead><tr><th>Name</th><th>Code</th></tr></thead>
+                        <tbody>
+                        @foreach (var s in Model.Lookups.States)
+                        {
+                            <tr><td>@s.State_Name</td><td>@(s.State_Code ?? "—")</td></tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card fx-card">
+                <div class="card-header"><strong>Cities</strong> <span class="badge badge-fx badge-fx-info">@Model.Lookups.Cities.Count</span></div>
+                <div class="card-body p-0" style="max-height:320px;overflow:auto;">
+                    <table class="table fx-table mb-0">
+                        <thead><tr><th>City</th><th>State</th></tr></thead>
+                        <tbody>
+                        @foreach (var c in Model.Lookups.Cities.OrderBy(x => x.State_Name).ThenBy(x => x.City_Name))
+                        {
+                            <tr><td>@c.City_Name</td><td>@(c.State_Name ?? "—")</td></tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card fx-card fx-form-card mb-4">
+                <div class="card-header"><strong>New lookup category</strong></div>
+                <div class="card-body">
+                    <form asp-action="CreateLookupCategory" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="form-group">
+                            <label asp-for="Lookups.NewCategory.Category_Key"></label>
+                            <input asp-for="Lookups.NewCategory.Category_Key" class="form-control" name="Category_Key" placeholder="e.g. PaymentTerms" required>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Lookups.NewCategory.Category_Name"></label>
+                            <input asp-for="Lookups.NewCategory.Category_Name" class="form-control" name="Category_Name" required>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Lookups.NewCategory.Description"></label>
+                            <input asp-for="Lookups.NewCategory.Description" class="form-control" name="Description">
+                        </div>
+                        <button type="submit" class="btn btn-fx btn-block">Add category</button>
+                    </form>
+                </div>
+            </div>
+            <div class="card fx-card fx-form-card">
+                <div class="card-header"><strong>Add dropdown value</strong></div>
+                <div class="card-body">
+                    <form asp-action="CreateLookupItem" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="form-group">
+                            <label asp-for="Lookups.NewItem.Category_Id"></label>
+                            <select asp-for="Lookups.NewItem.Category_Id" asp-items="ViewBag.LookupCategoryOptions" class="form-control" name="Category_Id"></select>
+                        </div>
+                        <div class="form-group">
+                            <label asp-for="Lookups.NewItem.Item_Label"></label>
+                            <input asp-for="Lookups.NewItem.Item_Label" class="form-control" name="Item_Label" required>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group col-md-6">
+                                <label asp-for="Lookups.NewItem.Item_Code"></label>
+                                <input asp-for="Lookups.NewItem.Item_Code" class="form-control" name="Item_Code">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label asp-for="Lookups.NewItem.Sort_Order"></label>
+                                <input asp-for="Lookups.NewItem.Sort_Order" class="form-control" name="Sort_Order" type="number">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-fx btn-block">Add value</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8 mb-4">
+            <div class="card fx-card">
+                <div class="card-header d-flex flex-wrap align-items-center justify-content-between">
+                    <strong>Lookup values</strong>
+                    <form method="get" asp-action="Lookups" class="form-inline">
+                        <input type="hidden" name="tab" value="values" />
+                        <select name="categoryId" class="form-control form-control-sm" onchange="this.form.submit()">
+                            <option value="">All categories</option>
+                            @foreach (var c in Model.Lookups.Categories)
+                            {
+                                <option value="@c.Category_Id" selected="@(selectedId == c.Category_Id)">@c.Category_Name</option>
+                            }
+                        </select>
+                    </form>
+                </div>
+                <div class="card-body p-0">
+                    @if (!Model.Lookups.Categories.Any())
+                    {
+                        <div class="fx-empty py-5">No lookup categories. Deploy CompanyDB_SettingsHub.sql or add one on the left.</div>
+                    }
+                    else if (!items.Any())
+                    {
+                        <div class="fx-empty py-5">No values in this category yet.</div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table fx-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Label</th>
+                                        <th>Code</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                @foreach (var i in items)
+                                {
+                                    <tr>
+                                        <td>@i.Category_Name</td>
+                                        <td class="font-weight-bold">@i.Item_Label</td>
+                                        <td>@(i.Item_Code ?? "—")</td>
+                                        <td class="text-right">
+                                            <form asp-action="DeactivateLookupItem" method="post" class="d-inline"
+                                                  onsubmit="return confirm('Remove this value? It will disappear from lookups and forms.');">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@i.Item_Id" />
+                                                <input type="hidden" name="categoryId" value="@i.Category_Id" />
+                                                <button type="submit" class="btn btn-fx-icon danger" title="Remove">
+                                                    <i class="fas fa-trash-alt"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}

@@ -1,0 +1,67 @@
+@model IEnumerable<Inventory.Models.ApprovalWorkflowListItem>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Approval Workflow";
+    ViewData["SettingsSection"] = "approvals";
+}
+
+@await Html.PartialAsync("~/Views/Settings/_SettingsSubnav.cshtml")
+
+<div class="page-hero fx-settings-hero d-flex justify-content-between align-items-start flex-wrap">
+    <div>
+        <a asp-controller="Settings" asp-action="Index" class="fx-settings-back"><i class="fas fa-arrow-left"></i> All settings</a>
+        <h1>Approval Workflow</h1>
+        <p>Per-form approval levels before ledger posting.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-fx"><i class="fas fa-plus mr-1"></i> Add workflow</a>
+</div>
+
+<div class="card fx-card">
+    <div class="card-body p-0">
+        @if (!Model.Any())
+        {
+            <div class="fx-empty py-5">No workflows yet. Add one to require approval on Payment / Expense submit.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table fx-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Form</th>
+                            <th>Segment</th>
+                            <th>Branch</th>
+                            <th>Level</th>
+                            <th>Approver</th>
+                            <th>For</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var w in Model)
+                    {
+                        var approver = w.IsReportingManager ? "Reporting manager"
+                            : (!string.IsNullOrWhiteSpace(w.ApprovalRoleName) ? "Role: " + w.ApprovalRoleName
+                            : "User: " + (w.ApprovalUserName ?? "—"));
+                        <tr>
+                            <td>@w.FormTypeName</td>
+                            <td>@w.SegmentName @(w.CategoryName != null ? " / " + w.CategoryName : "")</td>
+                            <td>@(w.BranchName ?? "—")</td>
+                            <td>@w.ApprovalLevel</td>
+                            <td>@approver</td>
+                            <td>@w.ApprovalForName</td>
+                            <td class="text-right">
+                                <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Deactivate this workflow?');">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="id" value="@w.Id" />
+                                    <button type="submit" class="btn btn-fx-icon danger"><i class="fas fa-trash-alt"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

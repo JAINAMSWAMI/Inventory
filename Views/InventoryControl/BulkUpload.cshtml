@@ -1,0 +1,203 @@
+@model Inventory.Models.ProductImportModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Import Products";
+}
+
+<div class="fx-form-page">
+    <div class="page-hero">
+        <div>
+            <h1>Import products from Excel</h1>
+            <p>Download the sample, fill one product per row, then upload the completed workbook.</p>
+        </div>
+        <a asp-action="GetElectronicData" class="btn btn-fx-outline">
+            <i class="fas fa-arrow-left mr-2"></i>Back to products
+        </a>
+    </div>
+
+    <div class="fx-form-shell">
+        <div class="fx-import-steps mb-4">
+            <div class="fx-import-step">
+                <span>1</span>
+                <div><strong>Download sample</strong><small>Use the required column format</small></div>
+            </div>
+            <i class="fas fa-chevron-right"></i>
+            <div class="fx-import-step">
+                <span>2</span>
+                <div><strong>Add your products</strong><small>Up to 1,000 rows per file</small></div>
+            </div>
+            <i class="fas fa-chevron-right"></i>
+            <div class="fx-import-step">
+                <span>3</span>
+                <div><strong>Upload &amp; validate</strong><small>Products save only when every row is valid</small></div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-4 mb-4">
+                <div class="card fx-card fx-template-card h-100">
+                    <div class="card-body">
+                        <span class="fx-excel-icon"><i class="fas fa-file-excel"></i></span>
+                        <h5>Product sample file</h5>
+                        <p class="text-muted">Includes the exact headers, an example product, formatting and instructions.</p>
+                        <a asp-action="DownloadProductTemplate" class="btn btn-fx btn-block">
+                            <i class="fas fa-download mr-2"></i>Download Excel sample
+                        </a>
+                        <div class="fx-import-note">
+                            <i class="fas fa-info-circle"></i>
+                            Keep the header names unchanged. Replace or delete the example row before uploading.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-8 mb-4">
+                <div class="card fx-card fx-form-card h-100">
+                    <div class="card-header">
+                        <span class="fx-form-icon"><i class="fas fa-cloud-upload-alt"></i></span>
+                        <div>
+                            <strong>Upload completed workbook</strong>
+                            <div class="small text-muted">Accepted format: .xlsx · Maximum size: 5 MB</div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <form asp-action="BulkUpload" method="post" enctype="multipart/form-data" id="productImportForm">
+                            @Html.AntiForgeryToken()
+                            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+                            <label class="fx-upload-zone" for="productExcelFile" id="uploadZone">
+                                <input asp-for="File" id="productExcelFile" type="file"
+                                       accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                                       required>
+                                <span class="fx-upload-icon"><i class="fas fa-file-upload"></i></span>
+                                <strong id="uploadTitle">Choose an Excel file</strong>
+                                <small id="uploadHint">Click here to browse your computer</small>
+                            </label>
+                            <span asp-validation-for="File" class="text-danger d-block mt-2"></span>
+
+                            <div class="fx-import-checks">
+                                <span><i class="fas fa-check-circle"></i>Validates required fields</span>
+                                <span><i class="fas fa-check-circle"></i>Checks categories and suppliers</span>
+                                <span><i class="fas fa-check-circle"></i>Blocks duplicate SKU/barcode</span>
+                                <span><i class="fas fa-check-circle"></i>All-or-nothing database save</span>
+                            </div>
+
+                            <div class="fx-form-actions">
+                                <a asp-action="GetElectronicData" class="btn btn-fx-outline">Cancel</a>
+                                <button type="submit" class="btn btn-fx" id="uploadButton">
+                                    <i class="fas fa-file-import mr-2"></i>Validate &amp; import
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.Errors.Any())
+        {
+            <div class="card fx-card fx-import-errors">
+                <div class="card-header d-flex align-items-center justify-content-between">
+                    <div>
+                        <strong><i class="fas fa-exclamation-triangle text-warning mr-2"></i>Import validation issues</strong>
+                        <div class="small text-muted">@Model.ValidRows of @Model.TotalRows rows valid · No products were inserted</div>
+                    </div>
+                    <span class="badge badge-fx badge-fx-warning">@Model.Errors.Count issues</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="table fx-table mb-0">
+                        <thead><tr><th style="width:110px">Excel row</th><th>What needs correction</th></tr></thead>
+                        <tbody>
+                        @foreach (var error in Model.Errors)
+                        {
+                            <tr>
+                                <td><span class="fx-qty-pill">@(error.RowNumber > 0 ? error.RowNumber.ToString() : "File")</span></td>
+                                <td class="text-danger">@error.Message</td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@section Styles {
+<style>
+.fx-import-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    background: #fff;
+    border: 1px solid #e8eef4;
+    border-radius: 14px;
+    box-shadow: var(--fx-shadow);
+}
+.fx-import-steps > i { color: #cbd5e1; }
+.fx-import-step { display: flex; align-items: center; gap: .7rem; }
+.fx-import-step > span {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; color: #fff; background: #0d9488;
+    border-radius: 50%; font-weight: 800;
+}
+.fx-import-step strong, .fx-import-step small { display: block; }
+.fx-import-step strong { color: #334155; font-size: .82rem; }
+.fx-import-step small { color: #94a3b8; font-size: .7rem; }
+.fx-template-card { text-align: center; }
+.fx-excel-icon {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 72px; height: 72px; margin: .4rem 0 1rem;
+    color: #15803d; background: #dcfce7; border-radius: 18px; font-size: 2rem;
+}
+.fx-template-card h5 { font-family: "Syne", sans-serif; font-weight: 700; }
+.fx-import-note {
+    display: flex; gap: .5rem; margin-top: 1rem; padding: .75rem;
+    color: #64748b; background: #f8fafc; border-radius: 10px;
+    text-align: left; font-size: .76rem;
+}
+.fx-upload-zone {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: 210px; padding: 2rem; cursor: pointer;
+    background: #f8fafc; border: 2px dashed #94a3b8; border-radius: 14px;
+    transition: border-color .2s, background .2s;
+}
+.fx-upload-zone:hover, .fx-upload-zone.has-file { background: #f0fdfa; border-color: #0d9488; }
+.fx-upload-zone input { position: absolute; opacity: 0; pointer-events: none; }
+.fx-upload-icon { color: #0d9488; font-size: 2.2rem; margin-bottom: .75rem; }
+.fx-upload-zone strong { color: #334155; }
+.fx-upload-zone small { color: #94a3b8; margin-top: .25rem; }
+.fx-import-checks {
+    display: grid; grid-template-columns: 1fr 1fr; gap: .45rem 1rem;
+    margin-top: 1rem; color: #64748b; font-size: .75rem;
+}
+.fx-import-checks i { color: #0d9488; margin-right: .3rem; }
+.fx-import-errors { border-top: 3px solid #f59e0b; }
+@@media (max-width: 768px) {
+    .fx-import-steps { align-items: stretch; flex-direction: column; }
+    .fx-import-steps > i { display: none; }
+    .fx-import-checks { grid-template-columns: 1fr; }
+}
+</style>
+}
+
+@section Scripts {
+<script>
+    (function () {
+        const input = document.getElementById('productExcelFile');
+        const zone = document.getElementById('uploadZone');
+        const title = document.getElementById('uploadTitle');
+        const hint = document.getElementById('uploadHint');
+        input.addEventListener('change', function () {
+            const file = input.files && input.files[0];
+            zone.classList.toggle('has-file', !!file);
+            title.textContent = file ? file.name : 'Choose an Excel file';
+            hint.textContent = file
+                ? (file.size / 1024 / 1024).toFixed(2) + ' MB · Ready to validate'
+                : 'Click here to browse your computer';
+        });
+    })();
+</script>
+}

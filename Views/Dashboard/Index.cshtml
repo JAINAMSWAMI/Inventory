@@ -1,0 +1,192 @@
+@model Inventory.Models.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "_Layout";
+}
+
+<div class="page-hero">
+    <div>
+        <h1>Operations overview</h1>
+        <p>Live inventory · GRN inbound · DCN outbound · shipments</p>
+    </div>
+    <div class="d-flex flex-wrap" style="gap:.5rem;">
+        <a class="btn btn-fx" asp-controller="Documents" asp-action="CreateGRN">
+            <i class="fas fa-file-import mr-1"></i> GRN
+        </a>
+        <a class="btn btn-fx-outline" asp-controller="Documents" asp-action="CreateDCN">
+            <i class="fas fa-file-export mr-1"></i> DCN
+        </a>
+        <a class="btn btn-fx-outline" asp-controller="Distribution" asp-action="CreateOrder">
+            <i class="fas fa-shipping-fast mr-1"></i> Order
+        </a>
+        <a class="btn btn-fx-outline" asp-controller="Reports" asp-action="Index">
+            <i class="fas fa-chart-bar mr-1"></i> Reports
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="fx-metric accent">
+            <div class="label">Products</div>
+            <div class="value">@Model.TotalProducts</div>
+            <div class="hint">@Model.TotalStock.ToString("N0") units on hand</div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="fx-metric">
+            <div class="label">Inventory value</div>
+            <div class="value">@Model.InventoryValue.ToString("C0")</div>
+            <div class="hint">Stock × sell price</div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="fx-metric warn">
+            <div class="label">Low stock</div>
+            <div class="value">@Model.LowStockCount</div>
+            <div class="hint"><a asp-controller="InventoryControl" asp-action="LowStock">Review alerts</a></div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="fx-metric">
+            <div class="label">Open shipments</div>
+            <div class="value">@Model.OpenShipments</div>
+            <div class="hint">@Model.TotalOrders orders · @Model.OrderRevenue.ToString("C0")</div>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-2">
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="fx-metric">
+            <div class="label">GRN posted</div>
+            <div class="value">@Model.GRNCount</div>
+            <div class="hint">@Model.GRNQty.ToString("N0") qty received</div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="fx-metric">
+            <div class="label">DCN posted</div>
+            <div class="value">@Model.DCNCount</div>
+            <div class="hint">@Model.DCNQty.ToString("N0") qty dispatched</div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="fx-metric">
+            <div class="label">Suppliers</div>
+            <div class="value">@Model.SupplierCount</div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-md-6 mb-3">
+        <div class="fx-metric">
+            <div class="label">Warehouses</div>
+            <div class="value">@Model.WarehouseCount</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-7 mb-4">
+        <div class="card fx-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>Recent shipments</strong>
+                <a asp-controller="Distribution" asp-action="ViewShipment" class="small">View all</a>
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.RecentShipments.Any())
+                {
+                    <div class="fx-empty">
+                        <i class="fas fa-truck d-block"></i>
+                        No shipments yet. Create an order or post a DCN.
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table fx-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Order</th>
+                                    <th>Status</th>
+                                    <th>Warehouse</th>
+                                    <th class="text-right">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var s in Model.RecentShipments)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="font-weight-bold">@s.Order_No</div>
+                                            <div class="small text-muted">@s.Shipmnt_Tracking_No</div>
+                                        </td>
+                                        <td><span class="badge badge-fx badge-fx-info">@s.Shipmnt_Status</span></td>
+                                        <td>@s.Warehouse_Name</td>
+                                        <td class="text-right">@s.Order_Total_Cost.ToString("C0")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5 mb-4">
+        <div class="card fx-card mb-4">
+            <div class="card-header"><strong>Stock by category</strong></div>
+            <div class="card-body">
+                @if (!Model.StockByCategory.Any())
+                {
+                    <div class="fx-empty py-4">No category stock data.</div>
+                }
+                else
+                {
+                    @foreach (var c in Model.StockByCategory)
+                    {
+                        var max = Model.StockByCategory.Max(x => x.TotalStock);
+                        var pct = max > 0 ? (int)(c.TotalStock * 100.0 / max) : 0;
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between small mb-1">
+                                <span>@c.CategoryName</span>
+                                <span>@c.TotalStock units · @c.ProductCount SKUs</span>
+                            </div>
+                            <div class="progress" style="height:8px;border-radius:999px;">
+                                <div class="progress-bar" role="progressbar" style="width:@pct%;background:#0d9488;"></div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+
+        <div class="card fx-card">
+            <div class="card-header d-flex justify-content-between">
+                <strong>Low stock alerts</strong>
+                <a asp-controller="InventoryControl" asp-action="LowStock" class="small">Manage</a>
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.LowStockItems.Any())
+                {
+                    <div class="fx-empty py-4">All products above threshold.</div>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var item in Model.LowStockItems.Take(5))
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="font-weight-bold">@item.Electronic_Name</div>
+                                    <div class="small text-muted">@item.Electronic_Brand · @(item.SKU ?? "no SKU")</div>
+                                </div>
+                                <span class="badge badge-fx badge-fx-warning">@item.Electronic_CRStock left</span>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,355 @@
+@model Inventory.Models.InvoiceCreateModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Create Invoice";
+}
+
+<div class="fx-form-page">
+    <div class="page-hero d-flex justify-content-between align-items-start flex-wrap">
+        <div>
+            <h1>Create Invoice</h1>
+            <p>Tax / proforma invoice with customer mapping and line items.</p>
+        </div>
+        <a asp-action="Index" class="btn btn-fx-outline">Back to list</a>
+    </div>
+
+    <div class="fx-form-shell fx-form-shell-wide">
+        <form asp-action="Create" method="post" id="invoiceForm">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="card fx-card fx-form-card mb-3">
+                <div class="card-body">
+                    <div class="fx-inv-section-label">Type</div>
+                    <div class="fx-type-toggle" role="group">
+                        <label class="@(Model.Invoice_Type == "Tax" ? "active" : "")">
+                            <input type="radio" asp-for="Invoice_Type" value="Tax" /> Tax
+                        </label>
+                        <label class="@(Model.Invoice_Type == "Proforma" ? "active" : "")">
+                            <input type="radio" asp-for="Invoice_Type" value="Proforma" /> Proforma
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card fx-card fx-form-card mb-3">
+                <div class="card-body">
+                    <div class="fx-inv-section-label">Segments</div>
+                    <div class="form-row">
+                        <div class="form-group col-md-3">
+                            <label asp-for="Business_Segment"></label>
+                            <select asp-for="Business_Segment" asp-items="ViewBag.Segments" class="form-control"></select>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label asp-for="Business_Category"></label>
+                            <select asp-for="Business_Category" asp-items="ViewBag.Categories" class="form-control"></select>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label asp-for="Business_SubCategory"></label>
+                            <input asp-for="Business_SubCategory" class="form-control" placeholder="Optional">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label asp-for="Status"></label>
+                            <select asp-for="Status" asp-items="ViewBag.Statuses" class="form-control"></select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card fx-card fx-form-card mb-3">
+                <div class="card-body">
+                    <div class="fx-inv-section-label">Contact details</div>
+                    <div class="form-row">
+                        <div class="form-group col-md-6">
+                            <label asp-for="Business_Name"></label> <span class="text-danger">*</span>
+                            <input type="hidden" asp-for="Customer_Id" id="Customer_Id" />
+                            <div class="fx-ac">
+                                <input asp-for="Business_Name" class="form-control" id="Business_Name" autocomplete="off"
+                                       placeholder="Type business / customer name…" required />
+                                <div class="fx-ac-menu" id="businessMenu" hidden></div>
+                            </div>
+                            <span class="fx-field-hint" id="mappedHint">Mapped customer details fill automatically when you pick a match.</span>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label>Contact name</label>
+                            <div class="input-group">
+                                <select asp-for="Contact_Title" class="form-control" style="max-width:90px">
+                                    <option>Mr.</option><option>Ms.</option><option>Mrs.</option><option>Dr.</option>
+                                </select>
+                                <input asp-for="Contact_Name" class="form-control" id="Contact_Name" placeholder="Name">
+                            </div>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label asp-for="Contact_Phone"></label>
+                            <input asp-for="Contact_Phone" class="form-control" id="Contact_Phone">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card fx-card fx-form-card mb-3">
+                <div class="card-body">
+                    <div class="fx-inv-section-label">Order details</div>
+                    <div class="form-row">
+                        <div class="form-group col-md-3">
+                            <label>Invoice #</label>
+                            <input class="form-control" value="@Model.Invoice_No" readonly>
+                            <span class="fx-field-hint">Final number assigned on save</span>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label asp-for="Invoice_Date"></label> <span class="text-danger">*</span>
+                            <input asp-for="Invoice_Date" class="form-control" type="date">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label asp-for="Billing_Company"></label>
+                            <select asp-for="Billing_Company" asp-items="ViewBag.BillingCompanies" class="form-control"></select>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label asp-for="Due_Date"></label>
+                            <input asp-for="Due_Date" class="form-control" type="date">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label asp-for="PO_Number"></label>
+                            <input asp-for="PO_Number" class="form-control">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label asp-for="PO_Date"></label>
+                            <input asp-for="PO_Date" class="form-control" type="date">
+                        </div>
+                        <div class="form-group col-md-6">
+                            <label asp-for="Project_Title"></label>
+                            <input asp-for="Project_Title" class="form-control">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label asp-for="Delivery_Terms"></label>
+                            <select asp-for="Delivery_Terms" asp-items="ViewBag.DeliveryTerms" class="form-control">
+                                <option value="">Select delivery terms</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label asp-for="Payment_Terms"></label>
+                            <select asp-for="Payment_Terms" asp-items="ViewBag.PaymentTerms" class="form-control">
+                                <option value="">Select payment terms</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label asp-for="Warehouse_Name"></label>
+                            <select asp-for="Warehouse_Name" asp-items="ViewBag.Warehouses" class="form-control"></select>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label asp-for="Linked_Order_No"></label>
+                            <input asp-for="Linked_Order_No" class="form-control" placeholder="Optional order #">
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label asp-for="Payment_Status"></label>
+                            <select asp-for="Payment_Status" asp-items="ViewBag.PaymentStatuses" class="form-control"></select>
+                        </div>
+                        <div class="form-group col-md-3">
+                            <label asp-for="Assignee"></label>
+                            <input asp-for="Assignee" class="form-control">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card fx-card fx-form-card mb-3">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="fx-inv-section-label mb-0">Shipping address</div>
+                        <label class="mb-0 small">
+                            <input asp-for="Ship_Same_As_Bill" type="checkbox" id="Ship_Same_As_Bill" /> Same as billing address
+                        </label>
+                    </div>
+                    <div id="shipFields">
+                        <div class="form-row">
+                            <div class="form-group col-md-4">
+                                <label asp-for="Ship_Consignee"></label>
+                                <input asp-for="Ship_Consignee" class="form-control" id="Ship_Consignee">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label asp-for="Ship_Contact_Name"></label>
+                                <input asp-for="Ship_Contact_Name" class="form-control">
+                            </div>
+                            <div class="form-group col-md-4">
+                                <label asp-for="Ship_Contact_Phone"></label>
+                                <input asp-for="Ship_Contact_Phone" class="form-control">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label asp-for="Ship_Address1"></label>
+                                <input asp-for="Ship_Address1" class="form-control" id="Ship_Address1">
+                            </div>
+                            <div class="form-group col-md-6">
+                                <label asp-for="Ship_Address2"></label>
+                                <input asp-for="Ship_Address2" class="form-control" id="Ship_Address2">
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label asp-for="Ship_State_Id"></label>
+                                <select asp-for="Ship_State_Id" asp-items="ViewBag.States" class="form-control" id="Ship_State_Id"></select>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label asp-for="Ship_City_Id"></label>
+                                <select asp-for="Ship_City_Id" asp-items="ViewBag.Cities" class="form-control" id="Ship_City_Id"></select>
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label asp-for="Ship_Pincode"></label>
+                                <input asp-for="Ship_Pincode" class="form-control" id="Ship_Pincode">
+                            </div>
+                            <div class="form-group col-md-3">
+                                <label asp-for="Ship_GSTIN"></label>
+                                <input asp-for="Ship_GSTIN" class="form-control" id="Ship_GSTIN">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card fx-card fx-form-card mb-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>Line items</strong>
+                    <button type="button" class="btn btn-sm btn-fx" id="addLine"><i class="fas fa-plus"></i> Add line</button>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive fx-line-table-wrap">
+                        <table class="table fx-table fx-line-table mb-0" id="lineTable">
+                            <thead>
+                                <tr>
+                                    <th style="min-width:280px">Product</th>
+                                    <th style="width:120px">Qty</th>
+                                    <th style="width:140px">Unit price</th>
+                                    <th style="width:50px"></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            @for (var i = 0; i < Model.LineItems.Count; i++)
+                            {
+                                <tr class="fx-line-row">
+                                    <td>
+                                        <input type="hidden" name="LineItems[@i].Electronic_Id" class="fx-line-id" value="@Model.LineItems[i].Electronic_Id" />
+                                        <input type="text" name="LineItems[@i].Product_Label" class="form-control fx-line-label"
+                                               value="@Model.LineItems[i].Product_Label" placeholder="Product / description" required />
+                                    </td>
+                                    <td>
+                                        <input type="number" step="0.0001" min="0.0001" name="LineItems[@i].Quantity"
+                                               class="form-control fx-num" value="@Model.LineItems[i].Quantity" required />
+                                    </td>
+                                    <td>
+                                        <input type="number" step="0.01" min="0" name="LineItems[@i].Unit_Price"
+                                               class="form-control fx-num" value="@Model.LineItems[i].Unit_Price" required />
+                                    </td>
+                                    <td class="text-right">
+                                        <button type="button" class="btn btn-fx-icon danger fx-remove-line"><i class="fas fa-trash-alt"></i></button>
+                                    </td>
+                                </tr>
+                            }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="fx-form-actions">
+                <a asp-action="Index" class="btn btn-fx-outline">Cancel</a>
+                <button type="submit" class="btn btn-fx"><i class="fas fa-save mr-1"></i> Save invoice</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+(() => {
+    const menu = document.getElementById('businessMenu');
+    const input = document.getElementById('Business_Name');
+    const esc = s => String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    let timer;
+
+    input.addEventListener('input', () => {
+        clearTimeout(timer);
+        const q = input.value.trim();
+        if (q.length < 2) { menu.hidden = true; return; }
+        timer = setTimeout(() => {
+            fetch('@Url.Action("SearchBusiness", "Invoice")?q=' + encodeURIComponent(q))
+                .then(r => r.json())
+                .then(rows => {
+                    if (!rows.length) {
+                        menu.innerHTML = '<div class="fx-ac-empty">No matching businesses — new customer will be created</div>';
+                        menu.hidden = false;
+                        return;
+                    }
+                    menu.innerHTML = rows.map(c =>
+                        `<button type="button" class="fx-ac-option"
+                            data-id="${c.id || ''}" data-name="${esc(c.name)}" data-title="${esc(c.contactTitle)}"
+                            data-contact="${esc(c.contactName)}" data-phone="${esc(c.phone)}"
+                            data-a1="${esc(c.address1)}" data-a2="${esc(c.address2)}"
+                            data-state="${c.stateId || ''}" data-city="${c.cityId || ''}"
+                            data-pin="${esc(c.pincode)}" data-gstin="${esc(c.gstin)}">
+                            <span class="fx-ac-title">${esc(c.name)}</span>
+                            <span class="fx-ac-meta">${esc(c.phone || c.email || c.contactName || '')}</span>
+                         </button>`).join('');
+                    menu.hidden = false;
+                });
+        }, 220);
+    });
+
+    menu.addEventListener('click', e => {
+        const opt = e.target.closest('.fx-ac-option');
+        if (!opt) return;
+        document.getElementById('Customer_Id').value = opt.dataset.id || '';
+        input.value = opt.dataset.name || '';
+        document.getElementById('Contact_Name').value = opt.dataset.contact || opt.dataset.name || '';
+        document.getElementById('Contact_Phone').value = opt.dataset.phone || '';
+        document.getElementById('Ship_Consignee').value = opt.dataset.name || '';
+        document.getElementById('Ship_Address1').value = opt.dataset.a1 || '';
+        document.getElementById('Ship_Address2').value = opt.dataset.a2 || '';
+        document.getElementById('Ship_Pincode').value = opt.dataset.pin || '';
+        document.getElementById('Ship_GSTIN').value = opt.dataset.gstin || '';
+        if (opt.dataset.state) document.getElementById('Ship_State_Id').value = opt.dataset.state;
+        document.getElementById('mappedHint').textContent = 'Mapped to customer: ' + (opt.dataset.name || '');
+        menu.hidden = true;
+    });
+
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.fx-ac')) menu.hidden = true;
+    });
+
+    document.querySelectorAll('.fx-type-toggle input').forEach(r => {
+        r.addEventListener('change', () => {
+            document.querySelectorAll('.fx-type-toggle label').forEach(l => l.classList.remove('active'));
+            r.closest('label').classList.add('active');
+        });
+    });
+
+    const tbody = document.querySelector('#lineTable tbody');
+    document.getElementById('addLine').addEventListener('click', () => {
+        const i = tbody.querySelectorAll('tr').length;
+        const tr = document.createElement('tr');
+        tr.className = 'fx-line-row';
+        tr.innerHTML = `
+            <td>
+                <input type="hidden" name="LineItems[${i}].Electronic_Id" class="fx-line-id" />
+                <input type="text" name="LineItems[${i}].Product_Label" class="form-control fx-line-label" placeholder="Product / description" required />
+            </td>
+            <td><input type="number" step="0.0001" min="0.0001" name="LineItems[${i}].Quantity" class="form-control fx-num" value="1" required /></td>
+            <td><input type="number" step="0.01" min="0" name="LineItems[${i}].Unit_Price" class="form-control fx-num" value="0" required /></td>
+            <td class="text-right"><button type="button" class="btn btn-fx-icon danger fx-remove-line"><i class="fas fa-trash-alt"></i></button></td>`;
+        tbody.appendChild(tr);
+    });
+
+    tbody.addEventListener('click', e => {
+        const btn = e.target.closest('.fx-remove-line');
+        if (!btn) return;
+        if (tbody.querySelectorAll('tr').length === 1) return;
+        btn.closest('tr').remove();
+        [...tbody.querySelectorAll('tr')].forEach((tr, i) => {
+            tr.querySelectorAll('[name]').forEach(el => {
+                el.name = el.name.replace(/LineItems\[\d+]/, `LineItems[${i}]`);
+            });
+        });
+    });
+
+    if (window.fluxxBindCityCascade) {
+        fluxxBindCityCascade('#Ship_State_Id', '#Ship_City_Id', '@Url.Action("Cities", "Lookup")');
+    }
+})();
+</script>
+}

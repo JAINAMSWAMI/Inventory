@@ -1,0 +1,128 @@
+@model Inventory.Models.GRNModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "GRN & DCN";
+    var dcn = ViewBag.DCN as Inventory.Models.DCNModel ?? new Inventory.Models.DCNModel();
+}
+
+<div class="page-hero">
+    <div>
+        <h1>Goods documents</h1>
+        <p>GRN receives stock from vendors or warehouses · DCN dispatches to customers or transfers between warehouses.</p>
+    </div>
+    <div class="d-flex flex-wrap" style="gap:.5rem;">
+        <a class="btn btn-fx" asp-action="CreateGRN"><i class="fas fa-file-import mr-1"></i> Create GRN</a>
+        <a class="btn btn-fx-outline" asp-action="CreateDCN"><i class="fas fa-file-export mr-1"></i> Create DCN</a>
+        <a class="btn btn-fx-outline" asp-controller="Reports" asp-action="Index"><i class="fas fa-chart-bar mr-1"></i> Reports</a>
+    </div>
+</div>
+
+<div class="fx-stats-row">
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon"><i class="fas fa-file-import"></i></span>
+        <div><span class="fx-stat-value">@Model.Items.Count</span><span class="fx-stat-label">GRN receipts</span></div>
+    </div>
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon info"><i class="fas fa-file-export"></i></span>
+        <div><span class="fx-stat-value">@dcn.Items.Count</span><span class="fx-stat-label">DCN dispatches</span></div>
+    </div>
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon warning"><i class="fas fa-cubes"></i></span>
+        <div><span class="fx-stat-value">@Model.Items.Sum(x => x.TotalQty).ToString("N0")</span><span class="fx-stat-label">Qty received</span></div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card fx-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong><i class="fas fa-file-import text-success mr-2"></i>Goods Receipt Notes</strong>
+                <a asp-action="CreateGRN" class="small">New GRN</a>
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.Items.Any())
+                {
+                    <div class="fx-empty py-4">No GRNs yet. Receive from a vendor or warehouse.</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table fx-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>GRN</th>
+                                    <th>Party</th>
+                                    <th>To WH</th>
+                                    <th>Qty</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var g in Model.Items.Take(20))
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="font-weight-bold">@g.GRN_No</div>
+                                            <div class="small text-muted">@g.GRN_Date.ToString("dd MMM yyyy")</div>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-fx badge-fx-info">@g.Party_Type</span>
+                                            <div class="small">@(g.Party_Type == "Vendor" ? g.Supplier_Name : g.From_Warehouse_Name)</div>
+                                        </td>
+                                        <td>@g.To_Warehouse_Name</td>
+                                        <td><span class="badge badge-fx badge-fx-success">@g.TotalQty</span></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card fx-card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong><i class="fas fa-file-export text-danger mr-2"></i>Delivery Challan Notes</strong>
+                <a asp-action="CreateDCN" class="small">New DCN</a>
+            </div>
+            <div class="card-body p-0">
+                @if (!dcn.Items.Any())
+                {
+                    <div class="fx-empty py-4">No DCNs yet. Dispatch to a customer or transfer WH→WH.</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table fx-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>DCN</th>
+                                    <th>Party</th>
+                                    <th>From WH</th>
+                                    <th>Qty</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var d in dcn.Items.Take(20))
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="font-weight-bold">@d.DCN_No</div>
+                                            <div class="small text-muted">@d.DCN_Date.ToString("dd MMM yyyy")</div>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-fx badge-fx-info">@d.Party_Type</span>
+                                            <div class="small">@(d.Party_Type == "Customer" ? d.Customer_Name : d.To_Warehouse_Name)</div>
+                                        </td>
+                                        <td>@d.From_Warehouse_Name</td>
+                                        <td><span class="badge badge-fx badge-fx-warning">@d.TotalQty</span></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,61 +1,94 @@
-﻿@{
+@{
     Layout = "_Layout";
     ViewData["Title"] = "Track Shipment";
+    var prefill = ViewBag.TrackingNo as string;
 }
 
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8 col-md-10">
-            <div class="card shadow-lg border-0 rounded-lg">
-                <div class="card-header bg-primary text-white text-center py-4">
-                    <h3 class="mb-0 font-weight-bold">Track Your Shipment</h3>
+<div class="fx-track-page">
+    <div class="page-hero page-hero-center text-center">
+        <div>
+            <h1>Track shipment</h1>
+            <p>Enter a tracking number to animate live delivery progress.</p>
+        </div>
+    </div>
+
+    <div class="fx-track-shell">
+        <div class="card fx-card fx-track-card">
+            <div class="fx-track-hero">
+                <div class="fx-track-pulse" aria-hidden="true"></div>
+                <span class="fx-track-badge"><i class="fas fa-map-marker-alt"></i> Live tracking</span>
+                <h2>Where is my order?</h2>
+                <p>Paste your TRK number — watch the journey light up step by step.</p>
+
+                <form id="trackForm" class="fx-track-form" autocomplete="off" onsubmit="return false;">
+                    <div class="fx-track-input-wrap">
+                        <i class="fas fa-barcode"></i>
+                        <input type="text" id="trackingNo" class="form-control"
+                               placeholder="e.g. TRK-A1B2C3D4E5F6"
+                               value="@prefill"
+                               maxlength="40"
+                               aria-label="Tracking number" />
+                        <button type="button" id="trackBtn" class="btn btn-fx" onclick="runTracking()">
+                            <i class="fas fa-search mr-1"></i> Track
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="fx-track-result" id="trackingContainer" hidden>
+                <div class="fx-track-meta" id="trackMeta">
+                    <div>
+                        <span class="label">Tracking</span>
+                        <strong id="metaTracking" class="font-monospace">—</strong>
+                    </div>
+                    <div>
+                        <span class="label">Order</span>
+                        <strong id="metaOrder">—</strong>
+                    </div>
+                    <div>
+                        <span class="label">Status</span>
+                        <strong id="metaStatus" class="fx-track-status">—</strong>
+                    </div>
                 </div>
 
-                <div class="card-body p-5">
-                    <div class="input-container text-center">
-                        <div class="mb-4">
-                            <div class="form-floating">
-                                <input type="text" id="trackingNo" class="form-control form-control-lg" placeholder="Enter Tracking Number">
-                                <label for="trackingNo">Enter Tracking Number</label>
-                            </div>
-                            <button type="button" class="btn btn-primary btn-lg px-5 mt-4 shadow-sm" onclick="updateTrackingProgress()">
-                                <i class="fas fa-search me-2"></i>Track Order
-                            </button>
-                        </div>
+                <div class="fx-track-progress" id="progressRoot">
+                    <div class="fx-track-rail">
+                        <div class="fx-track-rail-fill" id="progressFill"></div>
+                        <div class="fx-track-courier" id="courierIcon"><i class="fas fa-truck"></i></div>
                     </div>
 
-                    <div class="tracking-container mt-5" id="trackingContainer" style="display: none; opacity: 0; transition: opacity 0.5s;">
-                        <h4 class="text-primary mb-4 text-center">Shipment Status</h4>
-                        <div class="progress-container position-relative px-4">
-                            <div class="progress-line"></div>
-                            <div class="progress-line-fill" id="progress-line-fill"></div>
-                            <div class="steps-container d-flex justify-content-between position-relative">
-                                <div class="step">
-                                    <div class="circle" id="step1">
-                                        <i class="fas fa-spinner"></i>
-                                    </div>
-                                    <div class="label" id="label1">Processing</div>
-                                </div>
-                                <div class="step">
-                                    <div class="circle" id="step2">
-                                        <i class="fas fa-shipping-fast"></i>
-                                    </div>
-                                    <div class="label" id="label2">Shipped</div>
-                                </div>
-                                <div class="step">
-                                    <div class="circle" id="step3">
-                                        <i class="fas fa-truck"></i>
-                                    </div>
-                                    <div class="label" id="label3">Out for Delivery</div>
-                                </div>
-                                <div class="step">
-                                    <div class="circle" id="step4">
-                                        <i class="fas fa-check"></i>
-                                    </div>
-                                    <div class="label" id="label4">Delivered</div>
-                                </div>
-                            </div>
+                    <div class="fx-track-steps">
+                        <div class="fx-track-step" data-step="1">
+                            <div class="fx-track-dot"><i class="fas fa-box-open"></i></div>
+                            <div class="fx-track-step-label">Processing</div>
+                            <div class="fx-track-step-hint">Order confirmed</div>
                         </div>
+                        <div class="fx-track-step" data-step="2">
+                            <div class="fx-track-dot"><i class="fas fa-warehouse"></i></div>
+                            <div class="fx-track-step-label">Shipped</div>
+                            <div class="fx-track-step-hint">Left warehouse</div>
+                        </div>
+                        <div class="fx-track-step" data-step="3">
+                            <div class="fx-track-dot"><i class="fas fa-shipping-fast"></i></div>
+                            <div class="fx-track-step-label">Out for delivery</div>
+                            <div class="fx-track-step-hint">On the road</div>
+                        </div>
+                        <div class="fx-track-step" data-step="4">
+                            <div class="fx-track-dot"><i class="fas fa-check"></i></div>
+                            <div class="fx-track-step-label">Delivered</div>
+                            <div class="fx-track-step-hint">Complete</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fx-track-details" id="trackDetails" hidden>
+                    <div class="fx-track-detail-item">
+                        <span>Customer</span>
+                        <strong id="metaCustomer">—</strong>
+                    </div>
+                    <div class="fx-track-detail-item">
+                        <span>Product</span>
+                        <strong id="metaProduct">—</strong>
                     </div>
                 </div>
             </div>
@@ -63,249 +96,363 @@
     </div>
 </div>
 
+@section Styles {
 <style>
-    .card {
-        transition: transform 0.2s;
-    }
-    
-    .card:hover {
-        transform: translateY(-5px);
-    }
-    
-    .progress-container {
-        margin: 40px 0;
-    }
-    
-    .progress-line {
-        position: absolute;
-        top: 25px;
-        left: 50px;
-        right: 50px;
-        height: 4px;
-        background: #e9ecef;
-        z-index: 1;
-    }
-    
-    .progress-line-fill {
-        position: absolute;
-        top: 25px;
-        left: 50px;
-        height: 4px;
-        background: #0d6efd;
-        transition: width 1.5s cubic-bezier(0.4, 0, 0.2, 1);
-        z-index: 2;
-    }
-    
-    .steps-container {
-        z-index: 3;
-    }
-    
-    .step {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        flex: 1;
-    }
-    
-    .circle {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background: #fff;
-        border: 3px solid #e9ecef;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 1.2rem;
-        color: #6c757d;
-        transition: all 0.5s ease;
-        margin-bottom: 8px;
-    }
-    
-    .circle.active {
-        background: #0d6efd;
-        border-color: #0d6efd;
-        color: white;
-        box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.2);
-    }
-    
-    .label {
-        font-size: 0.875rem;
-        font-weight: 500;
-        color: #6c757d;
-        text-align: center;
-        transition: color 0.5s ease;
-        margin-top: 8px;
-    }
-    
-    .label.active {
-        color: #0d6efd;
-        font-weight: 600;
-    }
-    
-    .btn-primary {
-        transition: all 0.3s;
-    }
-    
-    .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3) !important;
-    }
-    
-    .form-control:focus {
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-    }
-    
-    media (max-width: 768px) {
-        .label {
-            font-size: 0.75rem;
-        }
-        
-        .circle {
-            width: 40px;
-            height: 40px;
-            font-size: 1rem;
-        }
-        
-        .progress-line, .progress-line-fill {
-            left: 30px;
-            right: 30px;
-        }
+.page-hero-center { justify-content: center; width: 100%; }
+.fx-track-page { max-width: 920px; margin: 0 auto; }
+.fx-track-shell { margin: 0 auto; }
+.fx-track-card { overflow: hidden; }
 
-    .bg-gradient-primary {
-        background: linear-gradient(45deg, #2937f0, #9f1ae2);
-    }
+.fx-track-hero {
+    position: relative;
+    padding: 2.25rem 1.75rem 1.75rem;
+    text-align: center;
+    background:
+        radial-gradient(ellipse 80% 60% at 50% -10%, rgba(13, 148, 136, .22), transparent 55%),
+        linear-gradient(165deg, #0f1c2e 0%, #16324f 50%, #0d4f4a 100%);
+    color: #fff;
+    overflow: hidden;
+}
+.fx-track-hero h2 {
+    font-family: "Syne", sans-serif;
+    font-weight: 800;
+    font-size: 1.75rem;
+    margin: .65rem 0 .35rem;
+}
+.fx-track-hero > p { color: rgba(255,255,255,.72); margin-bottom: 1.35rem; }
+.fx-track-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .35rem .75rem;
+    border-radius: 999px;
+    background: rgba(94, 234, 212, .18);
+    color: #99f6e4;
+    font-size: .75rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+.fx-track-pulse {
+    position: absolute;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    right: -40px; top: -50px;
+    background: rgba(94, 234, 212, .12);
+    animation: fxPulse 3.2s ease-in-out infinite;
+}
+@@keyframes fxPulse {
+    0%, 100% { transform: scale(1); opacity: .7; }
+    50% { transform: scale(1.15); opacity: 1; }
+}
 
-    .table th {
-        font-weight: 600;
-        color: #495057;
-        white-space: nowrap;
-    }
+.fx-track-form { max-width: 560px; margin: 0 auto; }
+.fx-track-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .45rem .45rem .45rem 1rem;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.25);
+}
+.fx-track-input-wrap > i { color: #94a3b8; }
+.fx-track-input-wrap .form-control {
+    border: 0;
+    box-shadow: none !important;
+    min-height: 44px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-weight: 600;
+    letter-spacing: .04em;
+}
+.fx-track-input-wrap .btn { white-space: nowrap; border-radius: 10px; }
 
-    .table td {
-        color: #555;
-    }
+.fx-track-result {
+    padding: 1.75rem 1.5rem 2rem;
+    animation: fxReveal .55s ease both;
+}
+.fx-track-result.is-animating {
+    animation: fxReveal .55s ease both;
+}
+@@keyframes fxReveal {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+}
 
-    .badge {
-        font-weight: 500;
-        letter-spacing: 0.3px;
-    }
+.fx-track-meta {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding: 1rem 1.15rem;
+    background: #f0fdfa;
+    border: 1px solid #ccfbf1;
+    border-radius: 12px;
+}
+.fx-track-meta .label {
+    display: block;
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: #64748b;
+    margin-bottom: .2rem;
+}
+.fx-track-status { color: var(--fx-accent-deep); }
 
-    .btn-sm {
-        transition: all 0.2s ease-in-out;
-    }
+.fx-track-progress { position: relative; padding: 1.25rem .5rem 0; }
+.fx-track-rail {
+    position: absolute;
+    top: 1.9rem;
+    left: 8%;
+    right: 8%;
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    z-index: 1;
+}
+.fx-track-rail-fill {
+    height: 100%;
+    width: 0;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #0d9488, #14b8a6);
+    transition: width 1.4s cubic-bezier(.22, 1, .36, 1);
+    box-shadow: 0 0 16px rgba(13, 148, 136, .45);
+}
+.fx-track-courier {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 36px;
+    height: 36px;
+    margin-top: -18px;
+    margin-left: -18px;
+    border-radius: 50%;
+    background: #0f766e;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 18px rgba(15, 118, 110, .4);
+    transition: left 1.4s cubic-bezier(.22, 1, .36, 1);
+    z-index: 3;
+}
+.fx-track-courier.bounce { animation: fxTruckBounce .6s ease; }
+@@keyframes fxTruckBounce {
+    0%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-8px); }
+    70% { transform: translateY(-2px); }
+}
 
-        .btn-sm:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1) !important;
-        }
+.fx-track-steps {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: .5rem;
+    position: relative;
+    z-index: 2;
+}
+.fx-track-step {
+    text-align: center;
+    opacity: .45;
+    transform: translateY(6px);
+    transition: opacity .4s, transform .4s;
+}
+.fx-track-step.active,
+.fx-track-step.done {
+    opacity: 1;
+    transform: translateY(0);
+}
+.fx-track-dot {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto .65rem;
+    border-radius: 50%;
+    border: 3px solid #cbd5e1;
+    background: #fff;
+    color: #94a3b8;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    transition: all .45s ease;
+}
+.fx-track-step.done .fx-track-dot {
+    background: #0d9488;
+    border-color: #0d9488;
+    color: #fff;
+    box-shadow: 0 0 0 5px rgba(13, 148, 136, .18);
+}
+.fx-track-step.active .fx-track-dot {
+    background: #fff;
+    border-color: #0d9488;
+    color: #0d9488;
+    animation: fxDotPulse 1.2s ease infinite;
+}
+@@keyframes fxDotPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(13, 148, 136, .35); }
+    50% { box-shadow: 0 0 0 10px rgba(13, 148, 136, 0); }
+}
+.fx-track-step-label {
+    font-weight: 700;
+    font-size: .88rem;
+    color: var(--fx-ink);
+}
+.fx-track-step-hint {
+    font-size: .72rem;
+    color: #94a3b8;
+}
 
-    .table-hover tbody tr {
-        transition: all 0.2s ease-in-out;
-    }
+.fx-track-details {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1.75rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid #edf2f7;
+}
+.fx-track-detail-item span {
+    display: block;
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #94a3b8;
+}
+.fx-track-detail-item strong { color: var(--fx-ink); }
 
-        .table-hover tbody tr:hover {
-            background-color: rgba(13, 110, 253, 0.04);
-            transform: scale(1.001);
-        }
+.fx-track-input-wrap.scanning {
+    animation: fxScanGlow 1s ease;
+}
+@@keyframes fxScanGlow {
+    0%, 100% { box-shadow: 0 12px 40px rgba(0,0,0,.25); }
+    50% { box-shadow: 0 0 0 4px rgba(13, 148, 136, .35), 0 12px 40px rgba(0,0,0,.25); }
+}
 
-    /* Improved scrollbar styling */
-    .table-responsive {
-        overflow-x: auto;
-        scrollbar-width: thin;
-        scrollbar-color: #888 #f1f1f1;
-    }
-
-        .table-responsive::-webkit-scrollbar {
-            height: 8px;
-        }
-
-        .table-responsive::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-        }
-
-        .table-responsive::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 4px;
-        }
-
-            .table-responsive::-webkit-scrollbar-thumb:hover {
-                background: #555;
-            }
-
-    /* Print styles */
-    media print {
-        .btn, .bg-gradient-primary
-
-    {
-        background: none !important;
-    }
-
-    .text-white {
-        color: #000 !important;
-    }
-
-    .card {
-        box-shadow: none !important;
-    }
-
-    .badge {
-        border: 1px solid #dee2e6;
-    }
-
-    }
-    }
+@@media (max-width: 640px) {
+    .fx-track-meta { grid-template-columns: 1fr; }
+    .fx-track-input-wrap { flex-wrap: wrap; }
+    .fx-track-input-wrap .btn { width: 100%; }
+    .fx-track-step-label { font-size: .72rem; }
+    .fx-track-dot { width: 40px; height: 40px; font-size: .9rem; }
+}
 </style>
+}
 
+@section Scripts {
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
-    async function fetchOrderProgress(trackingNo) {
-        try {
-            const response = await fetch(`/Distribution/GetOrderProgress?trackingNo=${trackingNo}`);
-            if (!response.ok) throw new Error("Failed to fetch order progress.");
-            const data = await response.json();
-            return data.currentStep;
-        } catch (error) {
-            console.error("Error fetching order progress:", error);
-            return 1;
-        }
-    }
+(function () {
+    const input = document.getElementById('trackingNo');
+    const container = document.getElementById('trackingContainer');
+    const fill = document.getElementById('progressFill');
+    const courier = document.getElementById('courierIcon');
+    const steps = [...document.querySelectorAll('.fx-track-step')];
 
-    async function updateTrackingProgress() {
-        const trackingNo = document.getElementById("trackingNo").value;
+    input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            runTracking();
+        }
+    });
+
+    window.runTracking = async function () {
+        const trackingNo = (input.value || '').trim();
         if (!trackingNo) {
             Swal.fire({
-                title: 'Error!',
-                text: 'Please enter a tracking number',
-                icon: 'error',
-                confirmButtonText: 'OK'
+                icon: 'warning',
+                title: 'Tracking number needed',
+                text: 'Enter a TRK number to start the journey animation.',
+                confirmButtonColor: '#0d9488'
             });
             return;
         }
-        
-        const currentStep = await fetchOrderProgress(trackingNo);
-        updateProgress(currentStep);
-        const trackingContainer = document.getElementById("trackingContainer");
-        trackingContainer.style.display = "block";
-        setTimeout(() => trackingContainer.style.opacity = 1, 50);
-    }
 
-    function updateProgress(currentStep) {
-        const progressLineFill = document.getElementById('progress-line-fill');
-        const circles = document.querySelectorAll('.circle');
-        const labels = document.querySelectorAll('.label');
-        const progressPercentage = ((currentStep - 1) / (circles.length - 1)) * 100;
-        progressLineFill.style.width = `${progressPercentage}%`;
-        
-        circles.forEach((circle, index) => {
-            circle.classList.toggle('active', index < currentStep);
-            labels[index].classList.toggle('active', index < currentStep);
+        const wrap = document.querySelector('.fx-track-input-wrap');
+        wrap.classList.add('scanning');
+        setTimeout(() => wrap.classList.remove('scanning'), 1000);
+
+        const btn = document.getElementById('trackBtn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Locating…';
+
+        try {
+            const res = await fetch('/Distribution/GetOrderProgress?trackingNo=' + encodeURIComponent(trackingNo));
+            const data = await res.json();
+
+            if (!data.found) {
+                container.hidden = true;
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Not found',
+                    text: 'No shipment matches “' + trackingNo + '”. Check the number and try again.',
+                    confirmButtonColor: '#0d9488'
+                });
+                return;
+            }
+
+            document.getElementById('metaTracking').textContent = trackingNo;
+            document.getElementById('metaOrder').textContent = data.orderNo || '—';
+            document.getElementById('metaStatus').textContent = data.status || '—';
+            document.getElementById('metaCustomer').textContent = data.customer || '—';
+            document.getElementById('metaProduct').textContent = data.product || '—';
+            document.getElementById('trackDetails').hidden = !(data.customer || data.product);
+
+            container.hidden = false;
+            container.classList.remove('is-animating');
+            void container.offsetWidth;
+            container.classList.add('is-animating');
+
+            await animateProgress(0);
+            await sleep(180);
+            await animateProgress(data.currentStep || 1);
+
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Shipment located',
+                text: data.status || 'Status updated',
+                showConfirmButton: false,
+                timer: 2200,
+                timerProgressBar: true
+            });
+        } catch (err) {
+            console.error(err);
+            Swal.fire({
+                icon: 'error',
+                title: 'Tracking failed',
+                text: 'Could not reach the tracking service. Try again.',
+                confirmButtonColor: '#0d9488'
+            });
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-search mr-1"></i> Track';
+        }
+    };
+
+    async function animateProgress(step) {
+        const total = steps.length;
+        const pct = total <= 1 ? 0 : ((Math.max(step, 1) - 1) / (total - 1)) * 100;
+        fill.style.width = pct + '%';
+        courier.style.left = pct + '%';
+        courier.classList.remove('bounce');
+        void courier.offsetWidth;
+        courier.classList.add('bounce');
+
+        steps.forEach((el, i) => {
+            const n = i + 1;
+            el.classList.remove('active', 'done');
+            if (n < step) el.classList.add('done');
+            else if (n === step) el.classList.add('active', 'done');
         });
     }
-</script>
 
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+    @if (!string.IsNullOrWhiteSpace(prefill))
+    {
+        <text>document.addEventListener('DOMContentLoaded', function () { runTracking(); });</text>
+    }
+})();
+</script>
 }

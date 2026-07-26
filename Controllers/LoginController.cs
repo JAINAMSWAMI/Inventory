@@ -1,6 +1,12 @@
 ﻿using DataLayer;
+using Inventory.Infrastructure;
 using Inventory.Models;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Inventory.Security;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -15,65 +21,98 @@ namespace Inventory.Controllers
             _logger = logger;
         }
 
-        // GET: LoginController
-        public ActionResult Login()
+        [AllowAnonymous]
+        [HttpGet]
+        public IActionResult Login()
         {
+            if (User.Identity?.IsAuthenticated == true)
+                return RedirectToAction("Index", "Dashboard");
             return View();
         }
 
+        [AllowAnonymous]
         [HttpPost]
-        public IActionResult Login(LoginModel model)
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Login(LoginModel model)
         {
+            if (!ModelState.IsValid)
+                return View(model);
+
             try
             {
-                // Create a new Login object and set its properties
-                Login login = new Login
+                var normalizedEmail = model.Email.Trim().ToLowerInvariant();
+                var login = new Login
                 {
-                    Email = model.Email,
-                    Password = EncodePassword(model.Password)  // Encode password before storing or verifying
+                    Email = normalizedEmail,
+                    Password = EncodePassword(model.Password)
                 };
 
-                // Check if the user exists and log them in
                 if (login.LoginUser())
                 {
-                    return RedirectToAction("Index", "SignUp");
+                    var claims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.Name, login.DisplayName),
+                        new Claim(ClaimTypes.Email, login.Email ?? normalizedEmail),
+                        new Claim(ClaimTypes.NameIdentifier, login.User_Id.ToString())
+                    };
+
+                    var role = string.IsNullOrWhiteSpace(login.Role_Name) ? "Staff" : login.Role_Name;
+                    claims.Add(new Claim(ClaimTypes.Role, role));
+
+                    foreach (System.Data.DataRow row in new UserAdmin().GetUserModules(login.User_Id).Rows)
+                    {
+                        var moduleKey = row["Module_Key"]?.ToString();
+                        if (!string.IsNullOrWhiteSpace(moduleKey))
+                            claims.Add(new Claim(ModuleAccess.ClaimType, moduleKey));
+                    }
+
+                    var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+                    var principal = new ClaimsPrincipal(identity);
+                    await HttpContext.SignInAsync(
+                        CookieAuthenticationDefaults.AuthenticationScheme,
+                        principal,
+                        new AuthenticationProperties
+                        {
+                            IsPersistent = model.RememberMe,
+                            ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
+                        });
+
+                    return RedirectToAction("Index", "Dashboard");
                 }
-                else
-                {
-                    _logger.LogWarning("Login failed for user: " + model.Email);
-                    ViewBag.Message = "INVALID EMAIL OR PASSWORD.";
-                    return View();
-                }
+
+                _logger.LogWarning("Login failed for user: {Email}", model.Email);
+                ViewBag.Message = "Invalid email or password.";
+                return View(model);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An error occurred while trying to log in.");
-                ViewBag.Message = "An error occurred. Please try again later.";
-                return View();
+                ControllerError.Capture(this, _logger, ex,
+                    "Login failed for {Email}",
+                    model.Email);
+                ViewBag.Message = TempData["Error"];
+                return View(model);
             }
         }
 
-        // Method to encode a string using SHA-256
-        private string EncodePassword(string password)
+        [Authorize]
+        [HttpGet]
+        public async Task<IActionResult> Logout()
         {
-            using (SHA256 sha256Hash = SHA256.Create())
-            {
-                // ComputeHash - returns byte array
-                byte[] bytes = sha256Hash.ComputeHash(Encoding.UTF8.GetBytes(password));
-
-                // Convert byte array to a string
-                StringBuilder builder = new StringBuilder();
-                for (int i = 0; i < bytes.Length; i++)
-                {
-                    builder.Append(bytes[i].ToString("x2"));
-                }
-                return builder.ToString();
-            }
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction(nameof(Login));
         }
 
-        public IActionResult Index()
+        [AllowAnonymous]
+        public IActionResult Index() => RedirectToAction(nameof(Login));
+
+        private static string EncodePassword(string password)
         {
-            return View();
+            using var sha256 = SHA256.Create();
+            var bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
+            var builder = new StringBuilder(bytes.Length * 2);
+            foreach (var b in bytes)
+                builder.Append(b.ToString("x2"));
+            return builder.ToString();
         }
     }
 }

@@ -1,0 +1,153 @@
+@model Inventory.Models.SupplierModel
+@{
+    ViewData["Title"] = "Suppliers";
+    Layout = "_Layout";
+    var activeCount = Model.Items.Count(x => x.Status == "Active");
+    var withEmail = Model.Items.Count(x => !string.IsNullOrWhiteSpace(x.Email));
+}
+
+<div class="page-hero">
+    <div>
+        <h1>Supplier directory</h1>
+        <p>Manage vendor contacts and availability in one place.</p>
+    </div>
+    <a class="btn btn-fx" asp-action="Create"><i class="fas fa-plus mr-2"></i>Add supplier</a>
+</div>
+
+<div class="fx-stats-row">
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon"><i class="fas fa-handshake"></i></span>
+        <div><span class="fx-stat-value">@Model.Items.Count</span><span class="fx-stat-label">Total suppliers</span></div>
+    </div>
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon info"><i class="fas fa-check-circle"></i></span>
+        <div><span class="fx-stat-value">@activeCount</span><span class="fx-stat-label">Active partners</span></div>
+    </div>
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon warning"><i class="fas fa-envelope"></i></span>
+        <div><span class="fx-stat-value">@withEmail</span><span class="fx-stat-label">Email contacts</span></div>
+    </div>
+</div>
+
+<div class="card fx-card">
+    <div class="fx-toolbar">
+        <div class="fx-search">
+            <i class="fas fa-search"></i>
+            <input id="supplierSearch" class="form-control" type="search"
+                   placeholder="Search name, contact, email or phone..." aria-label="Search suppliers">
+        </div>
+        <select id="supplierStatus" class="form-control fx-filter" aria-label="Filter by status">
+            <option value="">All statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+        </select>
+        <span class="fx-result-count"><strong id="supplierCount">@Model.Items.Count</strong> results</span>
+    </div>
+
+    <div class="card-body p-0">
+        @if (!Model.Items.Any())
+        {
+            <div class="fx-empty">
+                <i class="fas fa-handshake d-block"></i>
+                <h5>No suppliers yet</h5>
+                <p>Add your first supplier to start building the vendor directory.</p>
+                <a class="btn btn-fx" asp-action="Create">Add supplier</a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table fx-table mb-0">
+                    <thead>
+                        <tr><th>Supplier</th><th>Primary contact</th><th>Contact details</th><th>Status</th><th class="text-right">Actions</th></tr>
+                    </thead>
+                    <tbody id="supplierRows">
+                    @foreach (var item in Model.Items)
+                    {
+                        var initial = string.IsNullOrWhiteSpace(item.Supplier_Name) ? "?" : item.Supplier_Name[..1].ToUpperInvariant();
+                        <tr data-search="@($"{item.Supplier_Name} {item.Contact_Person} {item.Email} {item.Phone}".ToLowerInvariant())"
+                            data-status="@item.Status?.ToLowerInvariant()">
+                            <td>
+                                <div class="fx-entity">
+                                    <span class="fx-entity-icon">@initial</span>
+                                    <div>
+                                        <div class="fx-entity-title">@item.Supplier_Name</div>
+                                        <div class="fx-entity-subtitle">Supplier #@item.Supplier_Id</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>@(string.IsNullOrWhiteSpace(item.Contact_Person) ? "Not assigned" : item.Contact_Person)</td>
+                            <td>
+                                @if (!string.IsNullOrWhiteSpace(item.Email))
+                                {
+                                    <a href="mailto:@item.Email" class="d-block"><i class="far fa-envelope mr-1"></i>@item.Email</a>
+                                }
+                                <span class="small text-muted"><i class="fas fa-phone-alt mr-1"></i>@(item.Phone ?? "No phone")</span>
+                            </td>
+                            <td><span class="badge badge-fx @(item.Status == "Active" ? "badge-fx-success" : "badge-fx-muted")">@item.Status</span></td>
+                            <td class="text-right">
+                                <div class="fx-actions">
+                                    <a class="btn btn-fx-icon" asp-action="Edit" asp-route-id="@item.Supplier_Id"
+                                       title="Edit supplier" aria-label="Edit @item.Supplier_Name"><i class="fas fa-pen"></i></a>
+                                    <button class="btn btn-fx-icon danger" type="button" data-toggle="modal"
+                                            data-target="#deleteSupplier-@item.Supplier_Id" title="Delete supplier"
+                                            aria-label="Delete @item.Supplier_Name"><i class="fas fa-trash-alt"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+            <div id="supplierEmpty" class="fx-empty fx-filter-empty"><i class="fas fa-search d-block"></i>No suppliers match your filters.</div>
+        }
+    </div>
+</div>
+
+@foreach (var item in Model.Items)
+{
+    <div class="modal fade fx-modal" id="deleteSupplier-@item.Supplier_Id" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-body text-center p-4">
+                    <span class="fx-modal-danger"><i class="fas fa-trash-alt"></i></span>
+                    <h5 class="font-weight-bold">Delete supplier?</h5>
+                    <p class="text-muted mb-0">“@item.Supplier_Name” will be permanently removed.</p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-fx-outline" data-dismiss="modal">Keep supplier</button>
+                    <form asp-action="Delete" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@item.Supplier_Id">
+                        <button type="submit" class="btn btn-danger"><i class="fas fa-trash-alt mr-1"></i>Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+<script>
+    (function () {
+        const search = document.getElementById('supplierSearch');
+        const status = document.getElementById('supplierStatus');
+        const rows = [...document.querySelectorAll('#supplierRows tr')];
+        const count = document.getElementById('supplierCount');
+        const empty = document.getElementById('supplierEmpty');
+        function filterRows() {
+            const query = search.value.trim().toLowerCase();
+            let visible = 0;
+            rows.forEach(row => {
+                const show = row.dataset.search.includes(query) && (!status.value || row.dataset.status === status.value);
+                row.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
+            count.textContent = visible;
+            if (empty) empty.style.display = visible ? 'none' : 'block';
+        }
+        search.addEventListener('input', filterRows);
+        status.addEventListener('change', filterRows);
+    })();
+</script>
+}

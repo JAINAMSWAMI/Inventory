@@ -1,0 +1,139 @@
+@model Inventory.Models.ApprovalWorkflowEditModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Approval Workflow";
+    ViewData["SettingsSection"] = "approvals";
+}
+
+@await Html.PartialAsync("~/Views/Settings/_SettingsSubnav.cshtml")
+
+<div class="page-hero fx-settings-hero">
+    <div>
+        <a asp-controller="Settings" asp-action="Index" class="fx-settings-back"><i class="fas fa-arrow-left"></i> All settings</a>
+        <h1>Approval Workflow</h1>
+        <p>Define who must approve each form before it posts to ledger.</p>
+    </div>
+</div>
+
+<div class="fx-form-shell fx-form-shell-wide">
+    <form asp-action="Create" method="post" id="awForm">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="card fx-card fx-form-card mb-3">
+            <div class="card-body">
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label>Form <span class="text-danger">*</span></label>
+                        <select asp-for="FormTypeId" asp-items="ViewBag.FormTypes" class="form-control" required></select>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Business segment <span class="text-danger">*</span></label>
+                        <select asp-for="BusinessSegmentId" asp-items="ViewBag.Segments" class="form-control" required></select>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Business category</label>
+                        <select asp-for="BusinessCategoryId" asp-items="ViewBag.Categories" class="form-control"></select>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Business sub category</label>
+                        <select asp-for="BusinessSubCategoryId" asp-items="ViewBag.SubCategories" class="form-control"></select>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label>Branch / company <span class="text-danger">*</span></label>
+                        <select asp-for="BranchId" asp-items="ViewBag.Branches" class="form-control" required></select>
+                    </div>
+                    <div class="form-group col-md-6 d-flex align-items-end">
+                        <label class="mb-2">
+                            <input asp-for="IsHierarchyBased" type="checkbox" /> Based on form level / Associate user / Hierarchy wise
+                        </label>
+                    </div>
+                </div>
+
+                <hr />
+                <div class="fx-inv-section-label">Approver (select exactly one)</div>
+                <div class="form-row align-items-end">
+                    <div class="form-group col-md-4">
+                        <label><input type="radio" name="ApproverKind" value="user" checked="@(Model.ApproverKind=="user")" class="aw-kind" /> Approval user</label>
+                        <select asp-for="ApprovalUserId" asp-items="ViewBag.Users" class="form-control aw-user"></select>
+                    </div>
+                    <div class="col-md-1 text-center font-weight-bold text-muted pb-3">OR</div>
+                    <div class="form-group col-md-3">
+                        <label><input type="radio" name="ApproverKind" value="role" checked="@(Model.ApproverKind=="role")" class="aw-kind" /> Approval role</label>
+                        <select asp-for="ApprovalRoleId" asp-items="ViewBag.Roles" class="form-control aw-role"></select>
+                    </div>
+                    <div class="col-md-1 text-center font-weight-bold text-muted pb-3">OR</div>
+                    <div class="form-group col-md-3">
+                        <label class="d-block">&nbsp;</label>
+                        <label class="border rounded p-2 d-block">
+                            <input type="radio" name="ApproverKind" value="reportingManager" checked="@(Model.ApproverKind=="reportingManager")" class="aw-kind" />
+                            Reporting manager
+                        </label>
+                    </div>
+                </div>
+                <p class="small text-muted">You can select either approval user or approval role or reporting manager at a time.</p>
+
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label>Approval level <span class="text-danger">*</span></label>
+                        <input asp-for="ApprovalLevel" type="number" min="1" max="20" class="form-control" required />
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Approval for <span class="text-danger">*</span></label>
+                        <select asp-for="ApprovalForId" asp-items="ViewBag.ApprovalFor" class="form-control" required></select>
+                    </div>
+                </div>
+
+                <hr />
+                <div class="fx-inv-section-label">Notification templates</div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label>Pre-approval email</label>
+                        <select asp-for="PreApprovalEmailTemplateId" asp-items="ViewBag.EmailTemplates" class="form-control"></select>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Pre-approval SMS</label>
+                        <select asp-for="PreApprovalSmsTemplateId" asp-items="ViewBag.SmsTemplates" class="form-control"></select>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Post-approval email</label>
+                        <select asp-for="PostApprovalEmailTemplateId" asp-items="ViewBag.EmailTemplates" class="form-control"></select>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Post-approval SMS</label>
+                        <select asp-for="PostApprovalSmsTemplateId" asp-items="ViewBag.SmsTemplates" class="form-control"></select>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Post-reject email</label>
+                        <select asp-for="PostRejectEmailTemplateId" asp-items="ViewBag.EmailTemplates" class="form-control"></select>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label>Post-reject SMS</label>
+                        <select asp-for="PostRejectSmsTemplateId" asp-items="ViewBag.SmsTemplates" class="form-control"></select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="fx-form-actions">
+            <a asp-action="Index" class="btn btn-fx-outline">Cancel</a>
+            <button type="submit" class="btn btn-fx">Save workflow</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+<script>
+(() => {
+    function sync() {
+        const kind = document.querySelector('.aw-kind:checked')?.value || 'user';
+        document.querySelector('.aw-user').disabled = kind !== 'user';
+        document.querySelector('.aw-role').disabled = kind !== 'role';
+        if (kind !== 'user') document.querySelector('.aw-user').value = '';
+        if (kind !== 'role') document.querySelector('.aw-role').value = '';
+    }
+    document.querySelectorAll('.aw-kind').forEach(r => r.addEventListener('change', sync));
+    sync();
+})();
+</script>
+}

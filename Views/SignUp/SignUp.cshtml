@@ -1,72 +1,80 @@
 ﻿@model Inventory.Models.SignUpModel
 @{
     Layout = "_SignUp_Layout";
-    ViewData["Title"] = "Sign Up";
+    ViewData["Title"] = "Create account";
 }
 
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-lg-7">
-            @if (!string.IsNullOrEmpty(ViewBag.ErrorMessage))
-            {
-                <div class="alert alert-danger text-center" role="alert">
-                    @ViewBag.ErrorMessage
+<div class="auth-card">
+    <header class="auth-card-header">
+        <h2>Create your account</h2>
+        <p>Set up your Fluxx workspace access in a minute.</p>
+    </header>
+
+    <form asp-action="SignUp" method="post">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly"></div>
+
+        <div class="auth-field-row">
+            <div class="auth-field">
+                <label asp-for="FirstName"></label>
+                <div class="auth-input-wrap">
+                    <i class="fas fa-user"></i>
+                    <input asp-for="FirstName" class="auth-input"
+                           autocomplete="given-name" placeholder="First name" autofocus>
                 </div>
-            }
-            <div class="card shadow-lg mt-5">
-                <div class="card-header">
-                    <h3 class="text-center">Create Account</h3>
+                <span asp-validation-for="FirstName"></span>
+            </div>
+
+            <div class="auth-field">
+                <label asp-for="LastName"></label>
+                <div class="auth-input-wrap">
+                    <i class="fas fa-user"></i>
+                    <input asp-for="LastName" class="auth-input"
+                           autocomplete="family-name" placeholder="Last name">
                 </div>
-                <div class="card-body p-4">
-                    <form asp-action="SignUp" method="post">
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label" asp-for="FirstName">First name</label>
-                                    <input class="form-control" asp-for="FirstName" type="text" />
-                                    <span asp-validation-for="FirstName" class="text-danger"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label" asp-for="LastName">Last name</label>
-                                    <input class="form-control" asp-for="LastName" type="text" />
-                                    <span asp-validation-for="LastName" class="text-danger"></span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" asp-for="Email">Email address</label>
-                            <input class="form-control" asp-for="Email" type="email" />
-                            <span asp-validation-for="Email" class="text-danger"></span>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label" asp-for="Password">Password</label>
-                                    <input class="form-control" asp-for="Password" type="password" />
-                                    <span asp-validation-for="Password" class="text-danger"></span>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label class="form-label" asp-for="ConfirmPassword">Confirm Password</label>
-                                    <input class="form-control" asp-for="ConfirmPassword" type="password" />
-                                    <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-4 mb-0">
-                            <button type="submit" class="btn btn-primary w-100">Create Account</button>
-                        </div>
-                    </form>
-                </div>
-                <div class="card-footer text-center py-3">
-                    <div class="small">
-                        <a asp-controller="Login" asp-action="Login">Already have an account? Log in!</a>
-                    </div>
-                </div>
+                <span asp-validation-for="LastName"></span>
             </div>
         </div>
-    </div>
+
+        <div class="auth-field">
+            <label asp-for="Email"></label>
+            <div class="auth-input-wrap">
+                <i class="fas fa-envelope"></i>
+                <input asp-for="Email" class="auth-input" type="email"
+                       autocomplete="email" placeholder="name@company.com">
+            </div>
+            <span asp-validation-for="Email"></span>
+        </div>
+
+        <div class="auth-field-row">
+            <div class="auth-field">
+                <label asp-for="Password"></label>
+                <div class="auth-input-wrap">
+                    <i class="fas fa-lock"></i>
+                    <input asp-for="Password" class="auth-input" type="password"
+                           autocomplete="new-password" placeholder="Minimum 8 characters">
+                </div>
+                <span asp-validation-for="Password"></span>
+            </div>
+
+            <div class="auth-field">
+                <label asp-for="ConfirmPassword"></label>
+                <div class="auth-input-wrap">
+                    <i class="fas fa-shield-alt"></i>
+                    <input asp-for="ConfirmPassword" class="auth-input" type="password"
+                           autocomplete="new-password" placeholder="Repeat password">
+                </div>
+                <span asp-validation-for="ConfirmPassword"></span>
+            </div>
+        </div>
+
+        <button type="submit" class="auth-submit">
+            Create account <i class="fas fa-arrow-right ml-2"></i>
+        </button>
+    </form>
+
+    <p class="auth-switch">
+        Already have an account?
+        <a asp-controller="Login" asp-action="Login">Sign in</a>
+    </p>
 </div>

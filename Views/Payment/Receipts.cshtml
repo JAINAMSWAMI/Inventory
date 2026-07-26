@@ -1,0 +1,55 @@
+@model IEnumerable<Inventory.Models.FinanceVoucherListItem>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Payments / Receipts";
+    string Inr(decimal n) => n.ToString("C4", System.Globalization.CultureInfo.GetCultureInfo("en-IN"));
+}
+
+<div class="page-hero d-flex justify-content-between align-items-start flex-wrap">
+    <div>
+        <h1>Payments / Receipts</h1>
+        <p>Ledger-backed collections with optional approval.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-fx"><i class="fas fa-plus mr-1"></i> New payment</a>
+</div>
+
+<div class="card fx-card">
+    <div class="card-body p-0">
+        @if (!Model.Any())
+        {
+            <div class="fx-empty py-5">No payments yet.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table fx-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Payment #</th>
+                            <th>Date</th>
+                            <th>Party</th>
+                            <th>Mode</th>
+                            <th>Account</th>
+                            <th>Status</th>
+                            <th class="text-right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var r in Model)
+                    {
+                        <tr>
+                            <td class="font-weight-bold">@r.DocumentNo @(r.IsSettlement ? "(Settlement)" : "")</td>
+                            <td>@r.PaymentDate.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td>@r.PartyName</td>
+                            <td>@r.ModeName</td>
+                            <td>@r.AccountName</td>
+                            <td><span class="fx-badge @(r.ApprovalStatus == "Approved" ? "ok" : r.ApprovalStatus == "Rejected" ? "danger" : "warn")">@r.ApprovalStatus</span></td>
+                            <td class="text-right">@Inr(r.PaymentAmount)</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

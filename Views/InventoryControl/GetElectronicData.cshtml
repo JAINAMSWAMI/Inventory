@@ -1,146 +1,149 @@
 ﻿@model Inventory.Models.GetElectronicModel
-
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "Electronic Inventory";
+    ViewData["Title"] = "Products";
+    var totalUnits = Model.Data?.Sum(x => x.Electronic_CRStock) ?? 0;
+    var lowCount = Model.Data?.Count(x => x.Electronic_CRStock <= (x.Reorder_Level > 0 ? x.Reorder_Level : 10)) ?? 0;
 }
 
-<div class="container-fluid py-4">
-    <div class="card shadow-lg border-0 rounded-lg">
-        <div class="card-header bg-primary p-4">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h3 class="text-white m-0 fw-bold">Electronic Inventory</h3>
-                    <p class="text-white-50 mb-0">Manage your electronic products inventory</p>
-                </div>
-                <div class="d-flex gap-3">
-                    <button class="btn btn-light d-flex align-items-center" onclick="exportToExcel()">
-                        <i class="fas fa-file-excel me-2"></i>Export to Excel
-                    </button>
-                    <button class="btn btn-light d-flex align-items-center" onclick="window.print()">
-                        <i class="fas fa-print me-2"></i>Print Inventory
-                    </button>
-                </div>
-            </div>
-        </div>
+<div class="page-hero">
+    <div>
+        <h1>Product catalog</h1>
+        <p>SKU, cost, reorder levels and warehouse bin locations — real inventory master data.</p>
+    </div>
+    <div class="d-flex flex-wrap" style="gap:.5rem;">
+        <a class="btn btn-fx" asp-action="AddElectronic"><i class="fas fa-plus mr-1"></i> Add product</a>
+        <a class="btn btn-fx-outline" asp-action="BulkUpload"><i class="fas fa-file-excel mr-1"></i> Import Excel</a>
+        <a class="btn btn-fx-outline" asp-action="LowStock"><i class="fas fa-exclamation-triangle mr-1"></i> Low stock</a>
+        <a class="btn btn-fx-outline" asp-controller="Documents" asp-action="CreateGRN"><i class="fas fa-file-import mr-1"></i> GRN</a>
+    </div>
+</div>
 
-        <div class="card-body p-4">
+<div class="fx-stats-row">
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon"><i class="fas fa-boxes"></i></span>
+        <div><span class="fx-stat-value">@(Model.Data?.Count ?? 0)</span><span class="fx-stat-label">SKUs</span></div>
+    </div>
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon info"><i class="fas fa-layer-group"></i></span>
+        <div><span class="fx-stat-value">@totalUnits.ToString("N0")</span><span class="fx-stat-label">Units on hand</span></div>
+    </div>
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon warning"><i class="fas fa-bell"></i></span>
+        <div><span class="fx-stat-value">@lowCount</span><span class="fx-stat-label">Below reorder</span></div>
+    </div>
+</div>
+
+<div class="card fx-card mb-4">
+    <div class="card-body">
+        <form method="get" class="form-row align-items-end">
+            <div class="form-group col-md-5 mb-md-0">
+                <label class="small text-muted text-uppercase font-weight-bold">Search</label>
+                <input type="text" name="search" value="@ViewBag.Search" class="form-control" placeholder="Name, brand, SKU, category…">
+            </div>
+            <div class="form-group col-md-4 mb-md-0">
+                <label class="small text-muted text-uppercase font-weight-bold">Status</label>
+                <select name="status" class="form-control">
+                    <option value="">All statuses</option>
+                    @foreach (var s in new[] { "Available", "Active", "Low Stock", "Out of Stock", "Discontinued" })
+                    {
+                        <option value="@s" selected="@(ViewBag.Status as string == s)">@s</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group col-md-3 mb-0">
+                <button type="submit" class="btn btn-fx btn-block"><i class="fas fa-filter mr-1"></i> Filter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card fx-card">
+    <div class="card-body p-0">
+        @if (Model.Data == null || !Model.Data.Any())
+        {
+            <div class="fx-empty">
+                <i class="fas fa-box-open d-block"></i>
+                <h5>No products found</h5>
+                <p>Add a product or clear filters.</p>
+                <a class="btn btn-fx" asp-action="AddElectronic">Add product</a>
+            </div>
+        }
+        else
+        {
             <div class="table-responsive">
-                <table id="inventoryTable" class="table table-hover align-middle">
+                <table class="table fx-table mb-0" id="inventoryTable">
                     <thead>
-                        <tr class="bg-light">
-                            <th class="py-3 px-4">Product Details</th>
-                            <th class="py-3 px-4">Specifications</th>
-                            <th class="py-3 px-4">Stock & Price</th>
-                            <th class="py-3 px-4">Warranty</th>
-                            <th class="py-3 px-4 text-center">Status</th>
-                            <th class="py-3 px-4 text-center">Actions</th>
+                        <tr>
+                            <th>Product</th>
+                            <th>SKU / Bin</th>
+                            <th>Stock</th>
+                            <th>Cost / Price</th>
+                            <th>Warehouse</th>
+                            <th>Status</th>
+                            <th class="text-center">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var item in Model.Data)
                         {
-                            <tr class="border-bottom">
-                                <td class="py-3 px-4">
-                                    <div class="d-flex flex-column">
-                                        <span class="fw-bold">#@item.Electronic_Id - @item.Electronic_Name</span>
-                                        <span class="text-muted small">@item.Electronic_Brand</span>
-                                        <span class="badge bg-info text-white small">@item.Electronic_Sub_Category</span>
-                                    </div>
-                                </td>
-                                <td class="py-3 px-4">
-                                    <span class="text-wrap">@item.Electronic_Specs</span>
-                                </td>
-                                <td class="py-3 px-4">
-                                    <div class="d-flex flex-column">
-                                        <span class="fw-bold">$@item.Electronic_Price</span>
-                                        <div class="d-flex align-items-center">
-                                            <i class="fas fa-box text-muted me-2"></i>
-                                            <span>Stock: @item.Electronic_CRStock</span>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="py-3 px-4">
-                                    <div class="d-flex align-items-center">
-                                        <i class="fas fa-shield-alt text-muted me-2"></i>
-                                        <span>@item.Electronic_Warrenty_Period</span>
-                                    </div>
-                                </td>
-                                <td class="py-3 px-4 text-center">
-                                    @{
-                                        var statusClass = item.Electronic_Status.ToLower() switch
-                                        {
-                                            "active" => "bg-success",
-                                            "low stock" => "bg-warning",
-                                            "out of stock" => "bg-danger",
-                                            _ => "bg-secondary"
-                                        };
+                            var reorder = item.Reorder_Level > 0 ? item.Reorder_Level : 10;
+                            var isLow = item.Electronic_CRStock <= reorder;
+                            <tr>
+                                <td>
+                                    <div class="font-weight-bold">@item.Electronic_Name</div>
+                                    <div class="small text-muted">@item.Electronic_Brand · @item.Electronic_Sub_Category</div>
+                                    @if (!string.IsNullOrWhiteSpace(item.Model_Number))
+                                    {
+                                        <div class="small text-muted">Model: @item.Model_Number</div>
                                     }
-                                    <span class="badge @statusClass rounded-pill px-3 py-2">
-                                        @item.Electronic_Status
-                                    </span>
                                 </td>
-                                <td class="py-3 px-4 text-center">
-                                    <div class="d-flex gap-2 justify-content-center">
-                                        <a href="@Url.Action("EditElectronic", "InventoryControl", new { id = item.Electronic_Id })" 
-                                           class="btn btn-primary btn-sm rounded-pill px-3">
-                                            <i class="fas fa-edit me-1"></i> Edit
-                                        </a>
-                                        <button type="button" 
-                                                class="btn btn-danger btn-sm rounded-pill px-3" 
-                                                data-bs-toggle="modal" 
-                                                data-bs-target="#deleteModal-@item.Electronic_Id">
-                                            <i class="fas fa-trash-alt me-1"></i> Delete
-                                        </button>
-                                    </div>
-
-                                    <!-- Delete Modal --> 
-                                    <div class="modal fade" id="deleteModal-@item.Electronic_Id" tabindex="-1">
-                                        <div class="modal-dialog modal-dialog-centered">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">Confirm Deletion</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <p class="mb-0">Are you sure you want to delete this electronic item?</p>
-                                                    <p class="text-muted small mb-0">This action cannot be undone.</p>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                    <form action="@Url.Action("DeleteElectronic", "InventoryControl", new { id = item.Electronic_Id })" method="post">
-                                                        <button type="submit" class="btn btn-danger">Delete</button>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                                <td>
+                                    <div>@(string.IsNullOrWhiteSpace(item.SKU) ? "—" : item.SKU)</div>
+                                    <div class="small text-muted">Bin: @(item.Location_Bin ?? "—")</div>
+                                </td>
+                                <td>
+                                    <span class="badge badge-fx @(isLow ? "badge-fx-warning" : "badge-fx-success")">@item.Electronic_CRStock</span>
+                                    <div class="small text-muted">Reorder @reorder · Min @item.Min_Stock</div>
+                                </td>
+                                <td>
+                                    <div>Sell @item.Electronic_Price.ToString("C0")</div>
+                                    <div class="small text-muted">Cost @item.Unit_Cost.ToString("C2")</div>
+                                </td>
+                                <td>@(item.Default_Warehouse_Name ?? "—")</td>
+                                <td><span class="badge badge-fx badge-fx-info">@item.Electronic_Status</span></td>
+                                <td class="text-center text-nowrap">
+                                    <a class="btn btn-sm btn-fx-outline" asp-action="AdjustStock" asp-route-id="@item.Electronic_Id" title="Adjust">Stock</a>
+                                    <a class="btn btn-sm btn-fx" asp-action="EditElectronic" asp-route-id="@item.Electronic_Id">Edit</a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-toggle="modal" data-target="#del-@item.Electronic_Id">Del</button>
                                 </td>
                             </tr>
                         }
                     </tbody>
                 </table>
             </div>
-        </div>
+        }
     </div>
 </div>
 
-
-
-@section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-    <script>
-        $(document).on('click', '[data-bs-toggle="modal"]', function (event) {
-            let target = $(this).data('bs-target'); // Get the modal ID
-            let modal = new bootstrap.Modal(document.querySelector(target)); // Initialize Bootstrap modal
-            modal.show(); // Show the modal properly
-        });
-
-
-        function exportToExcel() {
-            const table = document.getElementById('inventoryTable');
-            const wb = XLSX.utils.table_to_book(table, {sheet: "Inventory"});
-            XLSX.writeFile(wb, 'electronic_inventory.xlsx');
-        }
-    </script>
+@foreach (var item in Model.Data ?? Enumerable.Empty<GetElectronicModel>())
+{
+    <div class="modal fade fx-modal" id="del-@item.Electronic_Id" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-body text-center p-4">
+                    <h5>Delete “@item.Electronic_Name”?</h5>
+                    <p class="text-muted">This cannot be undone.</p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-fx-outline" data-dismiss="modal">Cancel</button>
+                    <form asp-action="DeleteElectronic" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@item.Electronic_Id" />
+                        <button type="submit" class="btn btn-danger">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 }

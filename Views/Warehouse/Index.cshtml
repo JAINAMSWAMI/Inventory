@@ -1,0 +1,162 @@
+@model Inventory.Models.WarehouseModel
+@{
+    ViewData["Title"] = "Warehouses";
+    Layout = "_Layout";
+    var activeCount = Model.Items.Count(x => x.Status == "Active");
+    var totalCapacity = Model.Items.Sum(x => x.Capacity);
+}
+
+<div class="page-hero">
+    <div><h1>Warehouse network</h1><p>Manage locations, capacity and responsible managers.</p></div>
+    <a class="btn btn-fx" asp-action="Create"><i class="fas fa-plus mr-2"></i>Add warehouse</a>
+</div>
+
+<div class="fx-stats-row">
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon"><i class="fas fa-warehouse"></i></span>
+        <div><span class="fx-stat-value">@Model.Items.Count</span><span class="fx-stat-label">Locations</span></div>
+    </div>
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon info"><i class="fas fa-check-circle"></i></span>
+        <div><span class="fx-stat-value">@activeCount</span><span class="fx-stat-label">Active warehouses</span></div>
+    </div>
+    <div class="fx-stat-card">
+        <span class="fx-stat-icon warning"><i class="fas fa-boxes"></i></span>
+        <div><span class="fx-stat-value">@totalCapacity.ToString("N0")</span><span class="fx-stat-label">Total capacity</span></div>
+    </div>
+</div>
+
+<div class="card fx-card mb-4">
+    <div class="fx-toolbar border-0">
+        <div class="fx-search">
+            <i class="fas fa-search"></i>
+            <input id="warehouseSearch" class="form-control" type="search"
+                   placeholder="Search warehouse, location or manager..." aria-label="Search warehouses">
+        </div>
+        <select id="warehouseStatus" class="form-control fx-filter" aria-label="Filter by status">
+            <option value="">All statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+        </select>
+        <span class="fx-result-count"><strong id="warehouseCount">@Model.Items.Count</strong> locations</span>
+    </div>
+</div>
+
+@if (!Model.Items.Any())
+{
+    <div class="card fx-card">
+        <div class="fx-empty">
+            <i class="fas fa-warehouse d-block"></i>
+            <h5>No warehouses yet</h5>
+            <p>Add your first location to build the distribution network.</p>
+            <a class="btn btn-fx" asp-action="Create">Add warehouse</a>
+        </div>
+    </div>
+}
+else
+{
+    <div id="warehouseGrid" class="fx-warehouse-grid">
+    @foreach (var item in Model.Items)
+    {
+        <article class="fx-warehouse-card"
+                 data-search="@($"{item.Warehouse_Name} {item.Location} {item.Manager_Name} {item.Phone}".ToLowerInvariant())"
+                 data-status="@item.Status?.ToLowerInvariant()">
+                        <div class="fx-warehouse-top">
+                <div>
+                    <h3>@item.Warehouse_Name</h3>
+                    <div class="fx-warehouse-location">
+                        <i class="fas fa-map-marker-alt mr-1"></i>
+                        @(string.IsNullOrWhiteSpace(item.City_Name) && string.IsNullOrWhiteSpace(item.State_Name)
+                            ? (item.Location ?? "Location not set")
+                            : $"{item.City_Name}{(string.IsNullOrWhiteSpace(item.State_Name) ? "" : ", " + item.State_Name)}")
+                    </div>
+                </div>
+                <span class="badge badge-fx @(item.Status == "Active" ? "badge-fx-success" : "badge-fx-muted")">@item.Status</span>
+            </div>
+
+            <div class="fx-warehouse-meta">
+                <div><span>Type</span><strong>@(item.Warehouse_Type ?? "Distribution")</strong></div>
+                <div><span>Manager</span><strong>@(item.Manager_Name ?? "Not assigned")</strong></div>
+                <div><span>Capacity</span><strong>@item.Capacity.ToString("N0") units</strong></div>
+                <div><span>Phone</span><strong>@(item.Phone ?? "Not provided")</strong></div>
+                <div><span>Zone</span><strong>@(item.Zone ?? "—")</strong></div>
+                <div><span>Hours</span><strong>@(item.Operating_Hours ?? "—")</strong></div>
+            </div>
+            @if (item.Is_Primary)
+            {
+                <span class="badge badge-fx badge-fx-success mb-2">Primary warehouse</span>
+            }
+            @if (!string.IsNullOrWhiteSpace(item.Email))
+            {
+                <p class="small text-muted mb-1"><i class="fas fa-envelope mr-1"></i>@item.Email</p>
+            }
+            @if (!string.IsNullOrWhiteSpace(item.Address_Line))
+            {
+                <p class="small text-muted mb-3">@item.Address_Line</p>
+            }
+
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="small text-muted">Warehouse #@item.Warehouse_Id</span>
+                <div class="fx-actions">
+                    <a class="btn btn-fx-icon" asp-action="Edit" asp-route-id="@item.Warehouse_Id"
+                       title="Edit warehouse" aria-label="Edit @item.Warehouse_Name"><i class="fas fa-pen"></i></a>
+                    <button class="btn btn-fx-icon danger" type="button" data-toggle="modal"
+                            data-target="#deleteWarehouse-@item.Warehouse_Id" title="Delete warehouse"
+                            aria-label="Delete @item.Warehouse_Name"><i class="fas fa-trash-alt"></i></button>
+                </div>
+            </div>
+        </article>
+    }
+    </div>
+    <div id="warehouseEmpty" class="card fx-card fx-filter-empty">
+        <div class="fx-empty"><i class="fas fa-search d-block"></i>No warehouses match your filters.</div>
+    </div>
+}
+
+@foreach (var item in Model.Items)
+{
+    <div class="modal fade fx-modal" id="deleteWarehouse-@item.Warehouse_Id" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-body text-center p-4">
+                    <span class="fx-modal-danger"><i class="fas fa-trash-alt"></i></span>
+                    <h5 class="font-weight-bold">Delete warehouse?</h5>
+                    <p class="text-muted mb-0">“@item.Warehouse_Name” will be permanently removed.</p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <button type="button" class="btn btn-fx-outline" data-dismiss="modal">Keep warehouse</button>
+                    <form asp-action="Delete" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@item.Warehouse_Id">
+                        <button type="submit" class="btn btn-danger"><i class="fas fa-trash-alt mr-1"></i>Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+<script>
+    (function () {
+        const search = document.getElementById('warehouseSearch');
+        const status = document.getElementById('warehouseStatus');
+        const cards = [...document.querySelectorAll('#warehouseGrid .fx-warehouse-card')];
+        const count = document.getElementById('warehouseCount');
+        const empty = document.getElementById('warehouseEmpty');
+        function filterCards() {
+            const query = search.value.trim().toLowerCase();
+            let visible = 0;
+            cards.forEach(card => {
+                const show = card.dataset.search.includes(query) && (!status.value || card.dataset.status === status.value);
+                card.style.display = show ? '' : 'none';
+                if (show) visible++;
+            });
+            count.textContent = visible;
+            if (empty) empty.style.display = visible ? 'none' : 'block';
+        }
+        search.addEventListener('input', filterCards);
+        status.addEventListener('change', filterCards);
+    })();
+</script>
+}

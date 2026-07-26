@@ -1,0 +1,128 @@
+@model Inventory.Models.WarehouseModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Edit Warehouse";
+}
+
+<div class="fx-form-page">
+<div class="page-hero">
+    <div>
+        <h1>Edit warehouse</h1>
+        <p>Update “@Model.Warehouse_Name” site profile and logistics details.</p>
+    </div>
+    <a asp-action="Index" class="btn btn-fx-outline"><i class="fas fa-arrow-left mr-2"></i>Back</a>
+</div>
+
+<div class="fx-form-shell">
+    <div class="card fx-card fx-form-card">
+        <div class="card-header">
+            <span class="fx-form-icon"><i class="fas fa-pen"></i></span>
+            <div><strong>Warehouse #@Model.Warehouse_Id</strong><div class="small text-muted">UpdateWarehouse stored procedure</div></div>
+        </div>
+        <div class="card-body">
+            <form asp-action="Edit" method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="Warehouse_Id">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <h6 class="text-uppercase text-muted font-weight-bold mb-3">Basics</h6>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label asp-for="Warehouse_Name"></label>
+                        <input asp-for="Warehouse_Name" class="form-control" required autofocus>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label asp-for="Warehouse_Type"></label>
+                        <select asp-for="Warehouse_Type" class="form-control">
+                            <option>Distribution</option>
+                            <option>Central</option>
+                            <option>Retail</option>
+                            <option>Cold Storage</option>
+                            <option>Returns</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-3">
+                        <label asp-for="Status"></label>
+                        <select asp-for="Status" class="form-control">
+                            <option>Active</option>
+                            <option>Inactive</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label asp-for="Manager_Name"></label>
+                        <input asp-for="Manager_Name" class="form-control">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Phone"></label>
+                        <input asp-for="Phone" class="form-control">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Email"></label>
+                        <input asp-for="Email" class="form-control" type="email">
+                    </div>
+                </div>
+
+                <h6 class="text-uppercase text-muted font-weight-bold mb-3 mt-2">Address</h6>
+                <div class="form-row">
+                    <div class="form-group col-md-6">
+                        <label asp-for="State_Id"></label>
+                        <select asp-for="State_Id" asp-items="ViewBag.States" class="form-control" id="State_Id"></select>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <label asp-for="City_Id"></label>
+                        <select asp-for="City_Id" asp-items="ViewBag.Cities" class="form-control" id="City_Id"></select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-8">
+                        <label asp-for="Address_Line"></label>
+                        <input asp-for="Address_Line" class="form-control">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Pincode"></label>
+                        <input asp-for="Pincode" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label asp-for="Location"></label>
+                        <input asp-for="Location" class="form-control">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Zone"></label>
+                        <input asp-for="Zone" class="form-control">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Operating_Hours"></label>
+                        <input asp-for="Operating_Hours" class="form-control">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label asp-for="Capacity"></label>
+                        <input asp-for="Capacity" type="number" class="form-control" min="0">
+                    </div>
+                    <div class="form-group col-md-4 d-flex align-items-end">
+                        <div class="custom-control custom-checkbox mb-3">
+                            <input asp-for="Is_Primary" class="custom-control-input" />
+                            <label asp-for="Is_Primary" class="custom-control-label"></label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="fx-form-actions">
+                    <a asp-action="Index" class="btn btn-fx-outline">Cancel</a>
+                    <button type="submit" class="btn btn-fx"><i class="fas fa-save mr-2"></i>Save changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
+
+@section Scripts {
+<script src="~/js/fluxx-lookups.js"></script>
+<script>fluxxBindCityCascade('#State_Id', '#City_Id', '@Url.Action("Cities", "Lookup")', '@Model.City_Id');</script>
+}

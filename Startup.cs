@@ -1,11 +1,8 @@
-﻿using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.AspNetCore.Authentication.Cookies;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.FileProviders;
-using System.IO;
+using DataLayer;
+using Inventory.Infrastructure;
+using Inventory.Security;
 
 namespace Inventory
 {
@@ -18,43 +15,44 @@ namespace Inventory
 
         public IConfiguration Configuration { get; }
 
-        // Add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            // Add cookie-based authentication
+            var connectionString = Configuration.GetConnectionString("CompanyDB");
+            if (!string.IsNullOrWhiteSpace(connectionString))
+                DbConfig.Initialize(connectionString);
+
             services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
                 .AddCookie(options =>
                 {
-                    options.LoginPath = "/Login/Index";  // Set path to your login page
-                    options.LogoutPath = "/Login/Logout"; // Optional: Set logout path
-                    options.SlidingExpiration = true; // Optional: Enables sliding expiration for sessions
-                    options.ExpireTimeSpan = TimeSpan.FromMinutes(30); // Optional: Set session timeout duration
+                    options.LoginPath = "/Login/Login";
+                    options.LogoutPath = "/Login/Logout";
+                    options.AccessDeniedPath = "/Login/Login";
+                    options.SlidingExpiration = true;
+                    options.ExpireTimeSpan = TimeSpan.FromHours(8);
                 });
 
-            // Add MVC controllers and views
-            services.AddControllersWithViews();
+            services.AddControllersWithViews(options =>
+            {
+                options.Filters.Add<ModuleAuthorizationFilter>();
+                options.Filters.Add<RequiredDetailWarningFilter>();
+            });
+
+            services.AddScoped<Inventory.Services.IApprovalWorkflowService, Inventory.Services.ApprovalWorkflowService>();
         }
 
-        // Configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (env.IsDevelopment())
+            // Correlation ID must wrap everything so logs and responses share one ID.
+            app.UseMiddleware<CorrelationIdMiddleware>();
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+            if (!env.IsDevelopment())
             {
-                app.UseDeveloperExceptionPage();
-            }
-            else
-            {
-                app.UseExceptionHandler("/Home/Error");
                 app.UseHsts();
             }
 
-            // Redirect HTTP to HTTPS
             app.UseHttpsRedirection();
-
-            // Serve static files from "wwwroot" (default location)
             app.UseStaticFiles();
-
-            // Optional: Serve additional static files from a custom location
             app.UseStaticFiles(new StaticFileOptions
             {
                 FileProvider = new PhysicalFileProvider(
@@ -62,26 +60,15 @@ namespace Inventory
                 RequestPath = ""
             });
 
-            // Enable routing
             app.UseRouting();
+            app.UseAuthentication();
+            app.UseAuthorization();
 
-            // Enable authentication (cookie-based)
-            app.UseAuthentication();  // Add this line for cookie authentication
-
-            // Enable authorization (if required)
-            app.UseAuthorization(); 
-            // You can customize this for role-based authorization, etc.
-
-            // Configure endpoints for MVC controllers
             app.UseEndpoints(endpoints =>
             {
-                // Default route for login page
                 endpoints.MapControllerRoute(
                     name: "default",
-                    pattern: "{controller=SignUp}/{action=SignUp}/{id?}");
-
-                // Route for inventory-related actions
-               
+                    pattern: "{controller=Login}/{action=Login}/{id?}");
             });
         }
     }

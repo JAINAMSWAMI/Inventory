@@ -1,0 +1,100 @@
+@model Inventory.Models.SettingsPageModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Role Setup";
+    ViewData["SettingsSection"] = "roles";
+}
+
+@await Html.PartialAsync("_SettingsSubnav")
+
+<div class="page-hero fx-settings-hero">
+    <div>
+        <a asp-action="Index" class="fx-settings-back"><i class="fas fa-arrow-left"></i> All settings</a>
+        <h1>Role Setup</h1>
+        <p>Create roles, then assign module rights.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="card fx-card fx-form-card">
+            <div class="card-header">
+                <span class="fx-form-icon"><i class="fas fa-user-tag"></i></span>
+                <div><strong>Add role</strong><div class="small text-muted">Custom roles you control</div></div>
+            </div>
+            <div class="card-body">
+                <form asp-action="CreateRole" method="post">
+                    @Html.AntiForgeryToken()
+                    <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
+                    <div class="form-group">
+                        <label asp-for="NewRole.Role_Name"></label>
+                        <input asp-for="NewRole.Role_Name" class="form-control" name="Role_Name" required autofocus>
+                    </div>
+                    <div class="form-group">
+                        <label asp-for="NewRole.Description"></label>
+                        <input asp-for="NewRole.Description" class="form-control" name="Description">
+                    </div>
+                    <button type="submit" class="btn btn-fx btn-block"><i class="fas fa-plus mr-1"></i> Create role</button>
+                </form>
+                <p class="small text-muted mt-3 mb-0">
+                    After creating a role, open <a asp-action="Rights">Rights</a> to choose which modules appear in the menu.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-8 mb-4">
+        <div class="card fx-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>All roles</strong>
+                <a asp-action="Rights" class="btn btn-sm btn-fx">Manage rights</a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table fx-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Role</th>
+                                <th>Modules</th>
+                                <th>Users</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @foreach (var r in Model.Roles)
+                        {
+                            var count = Model.Users.Count(u => u.Role_Id == r.Role_Id);
+                            <tr>
+                                <td>
+                                    <div class="font-weight-bold">
+                                        @r.Role_Name
+                                        @if (r.Is_System)
+                                        {
+                                            <span class="badge badge-secondary ml-1">System</span>
+                                        }
+                                    </div>
+                                    <div class="small text-muted">@(r.Description ?? "—")</div>
+                                </td>
+                                <td><span class="badge badge-fx badge-fx-info">@r.ModuleKeys.Count modules</span></td>
+                                <td>@count</td>
+                                <td class="text-right">
+                                    @if (!r.Is_System)
+                                    {
+                                        <form asp-action="DeleteRole" method="post" class="d-inline"
+                                              onsubmit="return confirm('Deactivate this role?');">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="roleId" value="@r.Role_Id" />
+                                            <button type="submit" class="btn btn-fx-icon danger" title="Deactivate">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

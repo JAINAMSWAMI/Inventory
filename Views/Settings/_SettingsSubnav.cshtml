@@ -1,0 +1,29 @@
+@{
+    var section = ViewData["SettingsSection"]?.ToString() ?? "";
+}
+<nav class="fx-settings-subnav" aria-label="Settings sections">
+    <a class="fx-settings-subnav-link @(section == "hub" ? "active" : "")" asp-action="Index">
+        <i class="fas fa-th-large"></i> Overview
+    </a>
+    <a class="fx-settings-subnav-link @(section == "companies" ? "active" : "")" asp-action="Companies">
+        <i class="fas fa-building"></i> Companies
+    </a>
+    <a class="fx-settings-subnav-link @(section == "prefixes" ? "active" : "")" asp-action="Prefixes">
+        <i class="fas fa-hashtag"></i> Number Formats
+    </a>
+    <a class="fx-settings-subnav-link @(section == "users" ? "active" : "")" asp-action="Users">
+        <i class="fas fa-users"></i> User Setup
+    </a>
+    <a class="fx-settings-subnav-link @(section == "roles" ? "active" : "")" asp-action="Roles">
+        <i class="fas fa-user-tag"></i> Role Setup
+    </a>
+    <a class="fx-settings-subnav-link @(section == "rights" ? "active" : "")" asp-action="Rights">
+        <i class="fas fa-key"></i> Module Rights
+    </a>
+    <a class="fx-settings-subnav-link @(section == "lookups" ? "active" : "")" asp-controller="Settings" asp-action="Lookups">
+        <i class="fas fa-list"></i> Lookups
+    </a>
+    <a class="fx-settings-subnav-link @(section == "approvals" ? "active" : "")" asp-controller="ApprovalWorkflow" asp-action="Index">
+        <i class="fas fa-clipboard-check"></i> Approval Workflow
+    </a>
+</nav>

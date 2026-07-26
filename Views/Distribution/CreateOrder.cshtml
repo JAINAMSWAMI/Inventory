@@ -1,170 +1,477 @@
-﻿@model CreateOrderModel
+﻿@model Inventory.Models.CreateOrderModel
 @{
     Layout = "_Layout";
+    ViewData["Title"] = "Create Order";
 }
 
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8 col-md-10">
-            <div class="card shadow-lg border-0 rounded-lg">
-                <div class="card-header bg-primary text-white text-center py-4">
-                    <h2 class="font-weight-bold mb-0">Create Order</h2>
-                </div>
-                <div class="card-body p-5">
-                    <form asp-action="CreateOrder" method="post" class="needs-validation" novalidate>
-                        @Html.AntiForgeryToken()
-
-                        <div class="row g-4">
-                            <!-- Order Details Section -->
-                            <div class="col-12">
-                                <h4 class="text-primary mb-4">Order Details</h4>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="form-floating mb-3">
-                                    <input asp-for="Order_Date" class="form-control" type="date" />
-                                    <label asp-for="Order_Date"></label>
-                                    <span asp-validation-for="Order_Date" class="text-danger"></span>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="form-floating mb-3">
-                                    <select asp-for="Payment_Type" class="form-select">
-                                        <option value="">Select Payment Type</option>
-                                        <option value="Credit Card">Credit Card</option>
-                                        <option value="Debit Card">Debit Card</option>
-                                        <option value="Net Banking">Net Banking</option>
-                                        <option value="UPI">UPI</option>
-                                        <option value="Cash on Delivery">Cash on Delivery</option>
-                                    </select>
-                                    <label asp-for="Payment_Type"></label>
-                                    <span asp-validation-for="Payment_Type" class="text-danger"></span>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="form-floating mb-3">
-                                    <input asp-for="Order_Total_Cost" class="form-control" type="number" step="0.01" />
-                                    <label asp-for="Order_Total_Cost"></label>
-                                    <span asp-validation-for="Order_Total_Cost" class="text-danger"></span>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="form-floating mb-3">
-                                    <select asp-for="Payment_Status" class="form-select">
-                                        <option value="">Select Payment Status</option>
-                                        <option value="Pending">Pending</option>
-                                        <option value="Completed">Completed</option>
-                                        <option value="Failed">Failed</option>
-                                    </select>
-                                    <label asp-for="Payment_Status"></label>
-                                    <span asp-validation-for="Payment_Status" class="text-danger"></span>
-                                </div>
-                            </div>
-
-                            <div class="col-12">
-                                <h4 class="text-primary mt-4 mb-4">Shipping Information</h4>
-                            </div>
-
-                            <div class="col-12">
-                                <div class="form-floating mb-3">
-                                    <select asp-for="Shipping_Address" class="form-select">
-                                        <option value="">Select Warehouse Address</option>
-                                        <option value="Warehouse A - 123 Industrial Park, Chennai">Warehouse A - 123 Industrial Park, Chennai</option>
-                                        <option value="Warehouse B - 456 Tech Hub, Bangalore">Warehouse B - 456 Tech Hub, Bangalore</option>
-                                        <option value="Warehouse C - 789 Logistics Center, Mumbai">Warehouse C - 789 Logistics Center, Mumbai</option>
-                                        <option value="Warehouse D - 321 Distribution Hub, Delhi">Warehouse D - 321 Distribution Hub, Delhi</option>
-                                        <option value="Warehouse E - 654 Supply Chain Complex, Hyderabad">Warehouse E - 654 Supply Chain Complex, Hyderabad</option>
-                                    </select>
-                                    <label asp-for="Shipping_Address">Select Shipping Address</label>
-                                    <span asp-validation-for="Shipping_Address" class="text-danger"></span>
-                                </div>
-                            </div>
-
-
-                            <div class="col-md-6">
-                                <div class="form-floating mb-3">
-                                    <input asp-for="Delivery_Expected_Date" class="form-control" type="date" />
-                                    <label asp-for="Delivery_Expected_Date"></label>
-                                    <span asp-validation-for="Delivery_Expected_Date" class="text-danger"></span>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="form-floating mb-3">
-                                    <select asp-for="Shipmnt_Status" class="form-select">
-                                        <option value="">Select Shipment Status</option>
-                                        <option value="Processing">Processing</option>
-                                        <option value="Shipped">Shipped</option>
-                                        <option value="Out for Delivery">Out for Delivery</option>
-                                        <option value="Delivered">Delivered</option>
-                                    </select>
-                                    <label asp-for="Shipmnt_Status"></label>
-                                    <span asp-validation-for="Shipmnt_Status" class="text-danger"></span>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="form-floating mb-3">
-                                    <input asp-for="Warehouse_Name" class="form-control" />
-                                    <label asp-for="Warehouse_Name"></label>
-                                    <span asp-validation-for="Warehouse_Name" class="text-danger"></span>
-                                </div>
-                            </div>
-
-                            <div class="col-md-6">
-                                <div class="form-floating mb-3">
-                                    <input asp-for="Shipping_Company" class="form-control" />
-                                    <label asp-for="Shipping_Company"></label>
-                                    <span asp-validation-for="Shipping_Company" class="text-danger"></span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="text-center mt-5">
-                            <button type="submit" class="btn btn-primary btn-lg px-5 py-2 shadow-sm" onclick="redirectToSuccess()">
-                                Create Order
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+<div class="fx-form-page">
+<div class="page-hero">
+    <div>
+        <h1>Create outbound order</h1>
+        <p>Customer order with stock deduction — or use <a asp-controller="Documents" asp-action="CreateDCN">DCN</a> for challan-based dispatch / WH transfer.</p>
+    </div>
+    <div class="d-flex flex-wrap" style="gap:.5rem;">
+        <a asp-action="ViewShipment" class="btn btn-fx-outline"><i class="fas fa-list mr-1"></i>Shipments</a>
+        <a asp-controller="Documents" asp-action="CreateDCN" class="btn btn-fx-outline"><i class="fas fa-file-export mr-1"></i>DCN</a>
     </div>
 </div>
 
-<style>
-    .form-floating > label {
-        font-size: 0.9rem;
-        color: #6c757d;
-    }
+<div class="fx-form-shell fx-form-shell-wide">
+    <div class="card fx-card fx-form-card">
+        <div class="card-header">
+            <span class="fx-form-icon"><i class="fas fa-shipping-fast"></i></span>
+            <div>
+                <strong>Order details</strong>
+                <div class="small text-muted">Stock is deducted automatically when a product is selected.</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <form asp-action="CreateOrder" method="post" id="orderForm">
+                @Html.AntiForgeryToken()
+                <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-    .form-control:focus, .form-select:focus {
-        border-color: #0d6efd;
-        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-    }
+                <h6 class="text-uppercase text-muted font-weight-bold mb-3">Order details</h6>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label>Customer order #</label>
+                        <input class="form-control" value="Auto-generated on save (ORD-...)" readonly disabled>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Order_Date"></label><span class="text-danger">*</span>
+                        <input asp-for="Order_Date" class="form-control" type="date">
+                        <span asp-validation-for="Order_Date" class="text-danger"></span>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Billing_Company"></label>
+                        <select asp-for="Billing_Company" asp-items="ViewBag.BillingCompanies" class="form-control">
+                            <option value="">-- Select billing company --</option>
+                        </select>
+                        <span asp-validation-for="Billing_Company" class="text-danger"></span>
+                        <span class="fx-field-hint">Managed in Settings → Companies</span>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label asp-for="Payment_Status"></label>
+                        <select asp-for="Payment_Status" class="form-control">
+                            <option>Pending</option>
+                            <option>UnPaid</option>
+                            <option>Completed</option>
+                            <option>Failed</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Est_Dispatch_Date"></label>
+                        <input asp-for="Est_Dispatch_Date" class="form-control" type="date">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Delivery_Expected_Date"></label>
+                        <input asp-for="Delivery_Expected_Date" class="form-control" type="date">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label asp-for="Contractor"></label>
+                        <input asp-for="Contractor" class="form-control" placeholder="Contractor name">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="PO_Number"></label>
+                        <input asp-for="PO_Number" class="form-control" placeholder="Purchase order no.">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="PO_Date"></label>
+                        <input asp-for="PO_Date" class="form-control" type="date">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label asp-for="Start_Date"></label>
+                        <input asp-for="Start_Date" class="form-control" type="date">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Completion_Date"></label>
+                        <input asp-for="Completion_Date" class="form-control" type="date">
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Project_Title"></label>
+                        <input asp-for="Project_Title" class="form-control" placeholder="Project title">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label asp-for="Delivery_Terms"></label>
+                        <select asp-for="Delivery_Terms" class="form-control">
+                            <option value="">Select delivery terms</option>
+                            <option>Ex-Works</option>
+                            <option>FOR Destination</option>
+                            <option>Door Delivery</option>
+                            <option>Freight To Pay</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Payment_Terms"></label>
+                        <select asp-for="Payment_Terms" class="form-control">
+                            <option value="">Select payment terms</option>
+                            <option>100% Advance</option>
+                            <option>50% Advance, 50% on Delivery</option>
+                            <option>Against Delivery</option>
+                            <option>15 Days Credit</option>
+                            <option>30 Days Credit</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Lead_Source"></label>
+                        <select asp-for="Lead_Source" class="form-control" id="Lead_Source">
+                            <option value="">Select lead source</option>
+                            <option>Google</option>
+                            <option>Website</option>
+                            <option>Referral</option>
+                            <option>Exhibition</option>
+                            <option>Direct</option>
+                            <option>Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label asp-for="Other_Source"></label>
+                        <input asp-for="Other_Source" class="form-control" id="Other_Source" placeholder="Specify other source" disabled>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Warehouse_Name">Dispatch warehouse from</label>
+                        <select asp-for="Warehouse_Name" asp-items="ViewBag.Warehouses" class="form-control"></select>
+                        <span asp-validation-for="Warehouse_Name" class="text-danger"></span>
+                    </div>
+                </div>
 
-    .card {
-        transition: transform 0.2s;
-    }
+                <h6 class="text-uppercase text-muted font-weight-bold mb-3 mt-2">Customer</h6>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label asp-for="Customer_Name"></label>
+                        <input asp-for="Customer_Name" class="form-control" autofocus>
+                        <span asp-validation-for="Customer_Name" class="text-danger"></span>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Customer_Email"></label>
+                        <input asp-for="Customer_Email" class="form-control" type="email">
+                        <span asp-validation-for="Customer_Email" class="text-danger"></span>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Customer_Phone"></label>
+                        <input asp-for="Customer_Phone" class="form-control">
+                        <span asp-validation-for="Customer_Phone" class="text-danger"></span>
+                    </div>
+                </div>
 
-        .card:hover {
-            transform: translateY(-5px);
-        }
+                <div class="d-flex align-items-center justify-content-between mb-2 mt-2">
+                    <h6 class="text-uppercase text-muted font-weight-bold mb-0">Products</h6>
+                    <div class="d-flex" style="gap:.5rem;">
+                        <button type="button" class="btn btn-fx-outline btn-sm" id="btnLoadBom">
+                            <i class="fas fa-boxes mr-1"></i> Load Product Kit
+                        </button>
+                        <button type="button" class="btn btn-fx-outline btn-sm" id="btnAddLine">
+                            <i class="fas fa-plus mr-1"></i> Add product
+                        </button>
+                    </div>
+                </div>
+                <p class="small text-muted mb-2">Add multiple products, or load your Product Kit in one click.</p>
+                <div class="table-responsive fx-line-table-wrap mb-3">
+                    <table class="table fx-line-table mb-0" id="orderLines">
+                        <thead>
+                            <tr>
+                                <th style="min-width:240px;">Product</th>
+                                <th style="width:100px;">Qty</th>
+                                <th style="width:120px;">Unit price</th>
+                                <th style="width:48px;"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        @{
+                            var lines = Model.LineItems?.Count > 0 ? Model.LineItems : new List<Inventory.Models.OrderLineItemModel> { new() { Quantity = 1 } };
+                        }
+                        @for (var i = 0; i < lines.Count; i++)
+                        {
+                            <tr class="fx-line-row">
+                                <td>
+                                    <div class="fx-ac">
+                                        <input type="hidden" name="LineItems[@i].Electronic_Id" class="fx-line-id" value="@(lines[i].Electronic_Id > 0 ? lines[i].Electronic_Id.ToString() : "")" />
+                                        <input type="text" name="LineItems[@i].Product_Label" class="form-control fx-line-search"
+                                               value="@lines[i].Product_Label" placeholder="Type to search product…" autocomplete="off" />
+                                        <div class="fx-ac-menu" hidden></div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <input type="text" name="LineItems[@i].Quantity" class="form-control fx-line-qty fx-num"
+                                           value="@(lines[i].Quantity > 0 ? lines[i].Quantity.ToString() : "")"
+                                           inputmode="numeric" autocomplete="off" />
+                                </td>
+                                <td>
+                                    <input type="text" name="LineItems[@i].Unit_Price" class="form-control fx-line-price fx-num"
+                                           value="@(lines[i].Unit_Price?.ToString(System.Globalization.CultureInfo.InvariantCulture))"
+                                           inputmode="decimal" autocomplete="off" />
+                                </td>
+                                <td class="text-center">
+                                    <button type="button" class="btn btn-fx-icon danger fx-line-remove" title="Remove">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label asp-for="Order_Total_Cost"></label>
+                        <input asp-for="Order_Total_Cost" class="form-control fx-num" type="text" inputmode="decimal" id="Order_Total_Cost" autocomplete="off">
+                        <span asp-validation-for="Order_Total_Cost" class="text-danger"></span>
+                    </div>
+                </div>
 
-    .btn-primary {
-        transition: all 0.3s;
-    }
+                <h6 class="text-uppercase text-muted font-weight-bold mb-3 mt-2">Shipping destination</h6>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label asp-for="State_Id"></label>
+                        <select asp-for="State_Id" asp-items="ViewBag.States" class="form-control" id="State_Id"></select>
+                        <span asp-validation-for="State_Id" class="text-danger"></span>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="City_Id"></label>
+                        <select asp-for="City_Id" asp-items="ViewBag.Cities" class="form-control" id="City_Id"></select>
+                        <span asp-validation-for="City_Id" class="text-danger"></span>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Pincode"></label>
+                        <input asp-for="Pincode" class="form-control" maxlength="20">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label asp-for="Shipping_Address"></label>
+                    <textarea asp-for="Shipping_Address" class="form-control" rows="2" placeholder="Street, landmark, building"></textarea>
+                    <span asp-validation-for="Shipping_Address" class="text-danger"></span>
+                </div>
 
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(13, 110, 253, 0.3) !important;
-        }
+                <h6 class="text-uppercase text-muted font-weight-bold mb-3 mt-2">Fulfillment &amp; payment</h6>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label asp-for="Order_Priority"></label>
+                        <select asp-for="Order_Priority" class="form-control">
+                            <option>Normal</option>
+                            <option>High</option>
+                            <option>Urgent</option>
+                        </select>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Shipping_Company"></label>
+                        <select asp-for="Shipping_Company" asp-items="ViewBag.ShippingCompanies" class="form-control">
+                            <option value="">-- Select --</option>
+                        </select>
+                        <span asp-validation-for="Shipping_Company" class="text-danger"></span>
+                    </div>
+                    <div class="form-group col-md-4">
+                        <label asp-for="Shipmnt_Status"></label>
+                        <select asp-for="Shipmnt_Status" class="form-control">
+                            <option>Processing</option>
+                            <option>Shipped</option>
+                            <option>Out for Delivery</option>
+                            <option>Delivered</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group col-md-4">
+                        <label asp-for="Payment_Type"></label>
+                        <select asp-for="Payment_Type" class="form-control">
+                            <option value="">-- Select --</option>
+                            <option>Credit Card</option>
+                            <option>Debit Card</option>
+                            <option>UPI</option>
+                            <option>Net Banking</option>
+                            <option>Cash on Delivery</option>
+                        </select>
+                        <span asp-validation-for="Payment_Type" class="text-danger"></span>
+                    </div>
+                    <div class="form-group col-md-8">
+                        <label asp-for="Order_Notes"></label>
+                        <input asp-for="Order_Notes" class="form-control" placeholder="Delivery instructions">
+                    </div>
+                </div>
 
-</style>
+                <div class="fx-form-actions">
+                    <a asp-action="ViewShipment" class="btn btn-fx-outline">Cancel</a>
+                    <button type="submit" class="btn btn-fx"><i class="fas fa-check mr-2"></i>Create order</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+</div>
 
 @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
+<script src="~/js/fluxx-lookups.js"></script>
+<template id="orderLineTemplate">
+    <tr class="fx-line-row">
+        <td>
+            <div class="fx-ac">
+                <input type="hidden" name="LineItems[__i__].Electronic_Id" class="fx-line-id" value="" />
+                <input type="text" name="LineItems[__i__].Product_Label" class="form-control fx-line-search"
+                       placeholder="Type to search product…" autocomplete="off" />
+                <div class="fx-ac-menu" hidden></div>
+            </div>
+        </td>
+        <td>
+            <input type="text" name="LineItems[__i__].Quantity" class="form-control fx-line-qty fx-num"
+                   inputmode="numeric" value="1" autocomplete="off" />
+        </td>
+        <td>
+            <input type="text" name="LineItems[__i__].Unit_Price" class="form-control fx-line-price fx-num"
+                   inputmode="decimal" autocomplete="off" />
+        </td>
+        <td class="text-center">
+            <button type="button" class="btn btn-fx-icon danger fx-line-remove" title="Remove">
+                <i class="fas fa-trash-alt"></i>
+            </button>
+        </td>
+    </tr>
+</template>
+<script>
+(function () {
+    fluxxBindCityCascade('#State_Id', '#City_Id', '@Url.Action("Cities", "Lookup")', '@Model.City_Id');
+
+    const catalog = @Html.Raw(ViewBag.ProductCatalogJson ?? "[]");
+    const tbody = document.querySelector('#orderLines tbody');
+    const tpl = document.getElementById('orderLineTemplate').innerHTML;
+
+    function esc(s) {
+        return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function reindex() {
+        Array.from(tbody.querySelectorAll('.fx-line-row')).forEach(function (row, i) {
+            row.querySelectorAll('[name]').forEach(function (el) {
+                el.name = el.name.replace(/LineItems\[\d+]/, 'LineItems[' + i + ']');
+            });
+        });
+        recalcTotal();
+    }
+    function filterProducts(q) {
+        q = (q || '').trim().toLowerCase();
+        if (!q) return catalog.slice(0, 12);
+        return catalog.filter(function (p) {
+            return (p.label || '').toLowerCase().indexOf(q) >= 0;
+        }).slice(0, 12);
+    }
+    function recalcTotal() {
+        let total = 0;
+        tbody.querySelectorAll('.fx-line-row').forEach(function (row) {
+            const qty = parseFloat(row.querySelector('.fx-line-qty').value) || 0;
+            const price = parseFloat(row.querySelector('.fx-line-price').value) || 0;
+            total += qty * price;
+        });
+        document.getElementById('Order_Total_Cost').value = total ? total.toFixed(2) : '';
+    }
+    function bindRow(row) {
+        const search = row.querySelector('.fx-line-search');
+        const hidden = row.querySelector('.fx-line-id');
+        const menu = row.querySelector('.fx-ac-menu');
+        const price = row.querySelector('.fx-line-price');
+        const qty = row.querySelector('.fx-line-qty');
+
+        function renderMenu(items) {
+            if (!items.length) {
+                menu.innerHTML = '<div class="fx-ac-empty">No products found</div>';
+                menu.hidden = false;
+                return;
+            }
+            menu.innerHTML = items.map(function (p) {
+                return '<button type="button" class="fx-ac-option" data-id="' + p.id + '" data-label="' + esc(p.label) +
+                    '" data-price="' + p.price + '"><span class="fx-ac-title">' + esc(p.brand) + ' · ' + esc(p.name) +
+                    '</span><span class="fx-ac-meta">Stock: ' + p.stock + ' · ₹' + p.price + '</span></button>';
+            }).join('');
+            menu.hidden = false;
+        }
+        search.addEventListener('focus', function () { renderMenu(filterProducts(search.value)); });
+        search.addEventListener('input', function () { hidden.value = ''; renderMenu(filterProducts(search.value)); });
+        menu.addEventListener('mousedown', function (e) {
+            const opt = e.target.closest('.fx-ac-option');
+            if (!opt) return;
+            e.preventDefault();
+            hidden.value = opt.getAttribute('data-id');
+            search.value = opt.getAttribute('data-label');
+            price.value = opt.getAttribute('data-price') || '';
+            menu.hidden = true;
+            recalcTotal();
+        });
+        row.querySelector('.fx-line-remove').addEventListener('click', function () {
+            if (tbody.querySelectorAll('.fx-line-row').length <= 1) {
+                hidden.value = ''; search.value = ''; qty.value = ''; price.value = '';
+                recalcTotal();
+                return;
+            }
+            row.remove();
+            reindex();
+        });
+        qty.addEventListener('input', recalcTotal);
+        price.addEventListener('input', recalcTotal);
+        row.querySelectorAll('.fx-num').forEach(function (inp) {
+            inp.addEventListener('input', function () {
+                var allowDecimal = inp.getAttribute('inputmode') === 'decimal';
+                var cleaned = allowDecimal
+                    ? inp.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1')
+                    : inp.value.replace(/[^0-9]/g, '');
+                if (inp.value !== cleaned) inp.value = cleaned;
+            });
+        });
+    }
+
+    tbody.querySelectorAll('.fx-line-row').forEach(bindRow);
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('.fx-ac')) {
+            tbody.querySelectorAll('.fx-ac-menu').forEach(function (m) { m.hidden = true; });
+        }
+    });
+
+    document.getElementById('btnAddLine').addEventListener('click', function () {
+        const i = tbody.querySelectorAll('.fx-line-row').length;
+        tbody.insertAdjacentHTML('beforeend', tpl.replace(/__i__/g, String(i)));
+        bindRow(tbody.lastElementChild);
+        tbody.lastElementChild.querySelector('.fx-line-search').focus();
+    });
+
+    document.getElementById('btnLoadBom').addEventListener('click', function () {
+        fetch('@Url.Action("Products", "Bom")')
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                const items = (data && data.items) || [];
+                    if (!items.length) {
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({ icon: 'info', title: 'Product Kit empty', text: 'Add products under Orders & Shipments → Product Kit first.', confirmButtonColor: '#0d9488' });
+                        } else {
+                            alert('Product Kit is empty. Add products in Product Kit first.');
+                        }
+                        return;
+                    }
+                tbody.innerHTML = '';
+                items.forEach(function (it, i) {
+                    tbody.insertAdjacentHTML('beforeend', tpl.replace(/__i__/g, String(i)));
+                    const row = tbody.lastElementChild;
+                    bindRow(row);
+                    row.querySelector('.fx-line-id').value = it.electronicId;
+                    row.querySelector('.fx-line-search').value = it.label || '';
+                    row.querySelector('.fx-line-qty').value = it.quantity || 1;
+                    row.querySelector('.fx-line-price').value = it.unitPrice || '';
+                });
+                recalcTotal();
+            });
+    });
+
+    function toggleOtherSource() {
+        const isOther = $('#Lead_Source').val() === 'Other';
+        $('#Other_Source').prop('disabled', !isOther);
+        if (!isOther) $('#Other_Source').val('');
+    }
+    $('#Lead_Source').on('change', toggleOtherSource);
+    toggleOtherSource();
+    recalcTotal();
+})();
+</script>
 }
