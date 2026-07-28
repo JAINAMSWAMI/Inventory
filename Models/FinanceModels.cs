@@ -28,10 +28,18 @@ namespace Inventory.Models
     {
         public int? Electronic_Id { get; set; }
         public string Product_Label { get; set; } = string.Empty;
+        public string? HSN_Code { get; set; }
+        public string Unit_Of_Measure { get; set; } = "Pcs";
         [Range(0.0001, double.MaxValue)]
         public decimal Quantity { get; set; } = 1;
         [Range(0, double.MaxValue)]
         public decimal Unit_Price { get; set; }
+        public string Discount_Type { get; set; } = "Percent";
+        public decimal Discount_Value { get; set; }
+        public decimal Discount_Amount { get; set; }
+        public decimal Tax_Percent { get; set; }
+        public decimal Tax_Amount { get; set; }
+        public decimal Line_Total { get; set; }
     }
 
     public class InvoiceCreateModel
@@ -92,6 +100,41 @@ namespace Inventory.Models
         public string? Remarks { get; set; }
 
         public List<InvoiceLineItemModel> LineItems { get; set; } = new() { new() };
+    }
+
+    public class InvoicePreviewModel
+    {
+        public int Invoice_Id { get; set; }
+        public string Invoice_No { get; set; } = string.Empty;
+        public string Invoice_Type { get; set; } = "Tax";
+        public DateTime Invoice_Date { get; set; }
+        public DateTime? Due_Date { get; set; }
+        public string Status { get; set; } = "";
+        public string Payment_Status { get; set; } = "";
+        public string Business_Name { get; set; } = "";
+        public string? Contact_Name { get; set; }
+        public string? Contact_Phone { get; set; }
+        public string? Billing_Company { get; set; }
+        public string? Company_LogoUrl { get; set; }
+        public string? Company_Gstin { get; set; }
+        public string? Company_Email { get; set; }
+        public string? Company_Phone { get; set; }
+        public string? Company_Address { get; set; }
+        public string? PO_Number { get; set; }
+        public string? Project_Title { get; set; }
+        public string? Payment_Terms { get; set; }
+        public string? Delivery_Terms { get; set; }
+        public string? Ship_Address1 { get; set; }
+        public string? Ship_Address2 { get; set; }
+        public string? Ship_Pincode { get; set; }
+        public string? Ship_GSTIN { get; set; }
+        public string? Remarks { get; set; }
+        public decimal Amount { get; set; }
+        public List<InvoiceLineItemModel> LineItems { get; set; } = new();
+        public decimal SubTotal => LineItems.Sum(l => l.Quantity * l.Unit_Price);
+        public decimal TotalDiscount => LineItems.Sum(l => l.Discount_Amount);
+        public decimal TotalTax => LineItems.Sum(l => l.Tax_Amount);
+        public decimal GrandTotal => LineItems.Sum(l => l.Line_Total > 0 ? l.Line_Total : l.Quantity * l.Unit_Price + l.Tax_Amount);
     }
 
     public class PaymentReceiptModel

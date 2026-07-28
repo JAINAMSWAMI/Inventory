@@ -1,23 +1,23 @@
 @model Inventory.Models.DashboardViewModel
 @{
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Command Center";
     Layout = "_Layout";
 }
 
 <div class="page-hero">
     <div>
-        <h1>Operations overview</h1>
-        <p>Live inventory · GRN inbound · DCN outbound · shipments</p>
+        <h1>Command Center</h1>
+        <p>Live ERP overview · inventory · finance approvals · logistics</p>
     </div>
     <div class="d-flex flex-wrap" style="gap:.5rem;">
         <a class="btn btn-fx" asp-controller="Documents" asp-action="CreateGRN">
-            <i class="fas fa-file-import mr-1"></i> GRN
+            <i class="fas fa-file-import mr-1"></i> Goods Receipt
         </a>
         <a class="btn btn-fx-outline" asp-controller="Documents" asp-action="CreateDCN">
-            <i class="fas fa-file-export mr-1"></i> DCN
+            <i class="fas fa-file-export mr-1"></i> Goods Issue
         </a>
         <a class="btn btn-fx-outline" asp-controller="Distribution" asp-action="CreateOrder">
-            <i class="fas fa-shipping-fast mr-1"></i> Order
+            <i class="fas fa-shipping-fast mr-1"></i> Sales Order
         </a>
         <a class="btn btn-fx-outline" asp-controller="Reports" asp-action="Index">
             <i class="fas fa-chart-bar mr-1"></i> Reports
@@ -25,10 +25,30 @@
     </div>
 </div>
 
+@if (Model.PendingApprovals > 0 || Model.LowStockCount > 0)
+{
+    <div class="fx-automation-strip mb-4">
+        @if (Model.PendingApprovals > 0)
+        {
+            <a class="fx-automation-chip warn" asp-controller="Approval" asp-action="Inbox">
+                <i class="fas fa-clipboard-check"></i>
+                <span><strong>@Model.PendingApprovals</strong> approval@(Model.PendingApprovals == 1 ? "" : "s") waiting for you</span>
+            </a>
+        }
+        @if (Model.LowStockCount > 0)
+        {
+            <a class="fx-automation-chip danger" asp-controller="InventoryControl" asp-action="LowStock">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span><strong>@Model.LowStockCount</strong> low-stock alert@(Model.LowStockCount == 1 ? "" : "s") — reorder needed</span>
+            </a>
+        }
+    </div>
+}
+
 <div class="row">
     <div class="col-xl-3 col-md-6 mb-4">
         <div class="fx-metric accent">
-            <div class="label">Products</div>
+            <div class="label">Item Master</div>
             <div class="value">@Model.TotalProducts</div>
             <div class="hint">@Model.TotalStock.ToString("N0") units on hand</div>
         </div>
@@ -73,7 +93,7 @@
     </div>
     <div class="col-xl-3 col-md-6 mb-3">
         <div class="fx-metric">
-            <div class="label">Suppliers</div>
+            <div class="label">Vendors</div>
             <div class="value">@Model.SupplierCount</div>
         </div>
     </div>
@@ -97,7 +117,7 @@
                 {
                     <div class="fx-empty">
                         <i class="fas fa-truck d-block"></i>
-                        No shipments yet. Create an order or post a DCN.
+                        No shipments yet. Create a sales order or post a DCN.
                     </div>
                 }
                 else
@@ -134,8 +154,32 @@
     </div>
 
     <div class="col-lg-5 mb-4">
+        @if (Model.PendingApprovalItems.Any())
+        {
+            <div class="card fx-card mb-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <strong>My approval queue</strong>
+                    <a asp-controller="Approval" asp-action="Inbox" class="small">Open inbox</a>
+                </div>
+                <div class="card-body p-0">
+                    <ul class="list-group list-group-flush">
+                        @foreach (var item in Model.PendingApprovalItems.Take(5))
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="font-weight-bold">@item.FormTypeName</div>
+                                    <div class="small text-muted">#@item.RecordId · @(item.RequestedByName ?? "User")</div>
+                                </div>
+                                <span class="badge badge-fx badge-fx-warning">@item.RequestedAt.ToString("dd MMM")</span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </div>
+        }
+
         <div class="card fx-card mb-4">
-            <div class="card-header"><strong>Stock by category</strong></div>
+            <div class="card-header"><strong>Stock by item group</strong></div>
             <div class="card-body">
                 @if (!Model.StockByCategory.Any())
                 {

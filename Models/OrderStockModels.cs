@@ -133,8 +133,18 @@ namespace Inventory.Models
     {
         public int Electronic_Id { get; set; }
         public string? Product_Label { get; set; }
+        public string? HSN_Code { get; set; }
+        public string Unit_Of_Measure { get; set; } = "Pcs";
         public int Quantity { get; set; } = 1;
         public decimal? Unit_Price { get; set; }
+
+        /// <summary>Percent or Amount</summary>
+        public string Discount_Type { get; set; } = "Percent";
+        public decimal Discount_Value { get; set; }
+        public decimal Discount_Amount { get; set; }
+        public decimal Tax_Percent { get; set; }
+        public decimal Tax_Amount { get; set; }
+        public decimal Line_Total { get; set; }
     }
 
     public class ProductKitItemModel

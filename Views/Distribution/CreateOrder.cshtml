@@ -179,15 +179,22 @@
                     <table class="table fx-line-table mb-0" id="orderLines">
                         <thead>
                             <tr>
-                                <th style="min-width:240px;">Product</th>
-                                <th style="width:100px;">Qty</th>
-                                <th style="width:120px;">Unit price</th>
+                                <th style="min-width:200px;">Product</th>
+                                <th style="width:90px;">HSN</th>
+                                <th style="width:130px;">Qty</th>
+                                <th style="width:100px;">Rate</th>
+                                <th style="width:140px;">Discount</th>
+                                <th style="width:100px;">Discounted</th>
+                                <th style="width:110px;">Tax %</th>
+                                <th style="width:90px;">Tax</th>
+                                <th style="width:100px;">Total</th>
                                 <th style="width:48px;"></th>
                             </tr>
                         </thead>
                         <tbody>
                         @{
                             var lines = Model.LineItems?.Count > 0 ? Model.LineItems : new List<Inventory.Models.OrderLineItemModel> { new() { Quantity = 1 } };
+                            var taxOpts = ViewBag.TaxPercents as SelectList;
                         }
                         @for (var i = 0; i < lines.Count; i++)
                         {
@@ -201,14 +208,63 @@
                                     </div>
                                 </td>
                                 <td>
-                                    <input type="text" name="LineItems[@i].Quantity" class="form-control fx-line-qty fx-num"
-                                           value="@(lines[i].Quantity > 0 ? lines[i].Quantity.ToString() : "")"
-                                           inputmode="numeric" autocomplete="off" />
+                                    <input type="text" name="LineItems[@i].HSN_Code" class="form-control fx-line-hsn" value="@lines[i].HSN_Code" />
+                                </td>
+                                <td>
+                                    <div class="input-group input-group-sm">
+                                        <input type="text" name="LineItems[@i].Quantity" class="form-control fx-line-qty fx-num"
+                                               value="@(lines[i].Quantity > 0 ? lines[i].Quantity.ToString() : "")"
+                                               inputmode="numeric" autocomplete="off" />
+                                        <select name="LineItems[@i].Unit_Of_Measure" class="form-control" style="max-width:70px">
+                                            <option selected="@(lines[i].Unit_Of_Measure == "Pcs")">Pcs</option>
+                                            <option selected="@(lines[i].Unit_Of_Measure == "Kg")">Kg</option>
+                                            <option selected="@(lines[i].Unit_Of_Measure == "Box")">Box</option>
+                                        </select>
+                                    </div>
                                 </td>
                                 <td>
                                     <input type="text" name="LineItems[@i].Unit_Price" class="form-control fx-line-price fx-num"
                                            value="@(lines[i].Unit_Price?.ToString(System.Globalization.CultureInfo.InvariantCulture))"
                                            inputmode="decimal" autocomplete="off" />
+                                </td>
+                                <td>
+                                    <div class="input-group input-group-sm">
+                                        <select name="LineItems[@i].Discount_Type" class="form-control fx-disc-type" style="max-width:70px">
+                                            <option value="Percent" selected="@(lines[i].Discount_Type != "Amount")">%</option>
+                                            <option value="Amount" selected="@(lines[i].Discount_Type == "Amount")">₹</option>
+                                        </select>
+                                        <input type="text" name="LineItems[@i].Discount_Value" class="form-control fx-disc-val fx-num"
+                                               value="@lines[i].Discount_Value.ToString(System.Globalization.CultureInfo.InvariantCulture)" inputmode="decimal" />
+                                        <input type="hidden" name="LineItems[@i].Discount_Amount" class="fx-disc-amt" value="@lines[i].Discount_Amount" />
+                                    </div>
+                                </td>
+                                <td class="align-middle"><span class="fx-disc-price">0.0000</span>
+                                    <input type="hidden" class="fx-disc-price-input" />
+                                </td>
+                                <td>
+                                    <select name="LineItems[@i].Tax_Percent" class="form-control form-control-sm fx-tax-pct">
+                                        <option value="0">Select Tax</option>
+                                        @if (taxOpts != null)
+                                        {
+                                            foreach (SelectListItem t in taxOpts)
+                                            {
+                                                <option value="@t.Value" selected="@(lines[i].Tax_Percent.ToString(System.Globalization.CultureInfo.InvariantCulture) == t.Value)">@t.Text</option>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <option value="5">5%</option>
+                                            <option value="12">12%</option>
+                                            <option value="18">18%</option>
+                                            <option value="28">28%</option>
+                                        }
+                                    </select>
+                                </td>
+                                <td class="align-middle"><span class="fx-tax-amt">0.0000</span>
+                                    <input type="hidden" name="LineItems[@i].Tax_Amount" class="fx-tax-amt-input" value="@lines[i].Tax_Amount" />
+                                </td>
+                                <td class="align-middle"><span class="fx-line-total">0.0000</span>
+                                    <input type="hidden" name="LineItems[@i].Line_Total" class="fx-line-total-input" value="@lines[i].Line_Total" />
                                 </td>
                                 <td class="text-center">
                                     <button type="button" class="btn btn-fx-icon danger fx-line-remove" title="Remove">
@@ -220,6 +276,7 @@
                         </tbody>
                     </table>
                 </div>
+                <button type="button" class="btn btn-fx-outline btn-sm mb-3" id="btnAddLineBottom"><i class="fas fa-plus mr-1"></i> ADD NEW</button>
                 <div class="form-row">
                     <div class="form-group col-md-4">
                         <label asp-for="Order_Total_Cost"></label>
@@ -309,63 +366,65 @@
 
 @section Scripts {
 <script src="~/js/fluxx-lookups.js"></script>
+<script src="~/js/fluxx-tax-calc.js" asp-append-version="true"></script>
 <template id="orderLineTemplate">
     <tr class="fx-line-row">
         <td>
             <div class="fx-ac">
                 <input type="hidden" name="LineItems[__i__].Electronic_Id" class="fx-line-id" value="" />
-                <input type="text" name="LineItems[__i__].Product_Label" class="form-control fx-line-search"
-                       placeholder="Type to search product…" autocomplete="off" />
+                <input type="text" name="LineItems[__i__].Product_Label" class="form-control fx-line-search" placeholder="Type to search product…" autocomplete="off" />
                 <div class="fx-ac-menu" hidden></div>
             </div>
         </td>
+        <td><input type="text" name="LineItems[__i__].HSN_Code" class="form-control fx-line-hsn" /></td>
         <td>
-            <input type="text" name="LineItems[__i__].Quantity" class="form-control fx-line-qty fx-num"
-                   inputmode="numeric" value="1" autocomplete="off" />
+            <div class="input-group input-group-sm">
+                <input type="text" name="LineItems[__i__].Quantity" class="form-control fx-line-qty fx-num" inputmode="numeric" value="1" autocomplete="off" />
+                <select name="LineItems[__i__].Unit_Of_Measure" class="form-control" style="max-width:70px"><option>Pcs</option><option>Kg</option><option>Box</option></select>
+            </div>
         </td>
+        <td><input type="text" name="LineItems[__i__].Unit_Price" class="form-control fx-line-price fx-num" inputmode="decimal" autocomplete="off" /></td>
         <td>
-            <input type="text" name="LineItems[__i__].Unit_Price" class="form-control fx-line-price fx-num"
-                   inputmode="decimal" autocomplete="off" />
+            <div class="input-group input-group-sm">
+                <select name="LineItems[__i__].Discount_Type" class="form-control fx-disc-type" style="max-width:70px"><option value="Percent">%</option><option value="Amount">₹</option></select>
+                <input type="text" name="LineItems[__i__].Discount_Value" class="form-control fx-disc-val fx-num" value="0" inputmode="decimal" />
+                <input type="hidden" name="LineItems[__i__].Discount_Amount" class="fx-disc-amt" value="0" />
+            </div>
         </td>
-        <td class="text-center">
-            <button type="button" class="btn btn-fx-icon danger fx-line-remove" title="Remove">
-                <i class="fas fa-trash-alt"></i>
-            </button>
+        <td class="align-middle"><span class="fx-disc-price">0.0000</span><input type="hidden" class="fx-disc-price-input" /></td>
+        <td>
+            <select name="LineItems[__i__].Tax_Percent" class="form-control form-control-sm fx-tax-pct">
+                <option value="0">Select Tax</option><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option>
+            </select>
         </td>
+        <td class="align-middle"><span class="fx-tax-amt">0.0000</span><input type="hidden" name="LineItems[__i__].Tax_Amount" class="fx-tax-amt-input" value="0" /></td>
+        <td class="align-middle"><span class="fx-line-total">0.0000</span><input type="hidden" name="LineItems[__i__].Line_Total" class="fx-line-total-input" value="0" /></td>
+        <td class="text-center"><button type="button" class="btn btn-fx-icon danger fx-line-remove" title="Remove"><i class="fas fa-trash-alt"></i></button></td>
     </tr>
 </template>
 <script>
 (function () {
     fluxxBindCityCascade('#State_Id', '#City_Id', '@Url.Action("Cities", "Lookup")', '@Model.City_Id');
-
     const catalog = @Html.Raw(ViewBag.ProductCatalogJson ?? "[]");
     const tbody = document.querySelector('#orderLines tbody');
     const tpl = document.getElementById('orderLineTemplate').innerHTML;
-
-    function esc(s) {
-        return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-    }
+    function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
     function reindex() {
         Array.from(tbody.querySelectorAll('.fx-line-row')).forEach(function (row, i) {
-            row.querySelectorAll('[name]').forEach(function (el) {
-                el.name = el.name.replace(/LineItems\[\d+]/, 'LineItems[' + i + ']');
-            });
+            row.querySelectorAll('[name]').forEach(function (el) { el.name = el.name.replace(/LineItems\[\d+]/, 'LineItems[' + i + ']'); });
         });
         recalcTotal();
     }
     function filterProducts(q) {
         q = (q || '').trim().toLowerCase();
         if (!q) return catalog.slice(0, 12);
-        return catalog.filter(function (p) {
-            return (p.label || '').toLowerCase().indexOf(q) >= 0;
-        }).slice(0, 12);
+        return catalog.filter(function (p) { return (p.label || '').toLowerCase().indexOf(q) >= 0; }).slice(0, 12);
     }
     function recalcTotal() {
         let total = 0;
         tbody.querySelectorAll('.fx-line-row').forEach(function (row) {
-            const qty = parseFloat(row.querySelector('.fx-line-qty').value) || 0;
-            const price = parseFloat(row.querySelector('.fx-line-price').value) || 0;
-            total += qty * price;
+            const totInp = row.querySelector('.fx-line-total-input');
+            total += totInp && totInp.value ? (parseFloat(totInp.value) || 0) : ((parseFloat(row.querySelector('.fx-line-qty').value) || 0) * (parseFloat(row.querySelector('.fx-line-price').value) || 0));
         });
         document.getElementById('Order_Total_Cost').value = total ? total.toFixed(2) : '';
     }
@@ -375,17 +434,11 @@
         const menu = row.querySelector('.fx-ac-menu');
         const price = row.querySelector('.fx-line-price');
         const qty = row.querySelector('.fx-line-qty');
-
+        const hsn = row.querySelector('.fx-line-hsn');
         function renderMenu(items) {
-            if (!items.length) {
-                menu.innerHTML = '<div class="fx-ac-empty">No products found</div>';
-                menu.hidden = false;
-                return;
-            }
+            if (!items.length) { menu.innerHTML = '<div class="fx-ac-empty">No products found</div>'; menu.hidden = false; return; }
             menu.innerHTML = items.map(function (p) {
-                return '<button type="button" class="fx-ac-option" data-id="' + p.id + '" data-label="' + esc(p.label) +
-                    '" data-price="' + p.price + '"><span class="fx-ac-title">' + esc(p.brand) + ' · ' + esc(p.name) +
-                    '</span><span class="fx-ac-meta">Stock: ' + p.stock + ' · ₹' + p.price + '</span></button>';
+                return '<button type="button" class="fx-ac-option" data-id="' + p.id + '" data-label="' + esc(p.label) + '" data-price="' + p.price + '" data-hsn="' + esc(p.hsn || '') + '" data-tax="' + (p.tax || 18) + '"><span class="fx-ac-title">' + esc(p.brand) + ' · ' + esc(p.name) + '</span><span class="fx-ac-meta">Stock: ' + p.stock + ' · ₹' + p.price + '</span></button>';
             }).join('');
             menu.hidden = false;
         }
@@ -398,72 +451,68 @@
             hidden.value = opt.getAttribute('data-id');
             search.value = opt.getAttribute('data-label');
             price.value = opt.getAttribute('data-price') || '';
+            if (hsn) hsn.value = opt.getAttribute('data-hsn') || '';
+            const taxSel = row.querySelector('.fx-tax-pct');
+            const tax = opt.getAttribute('data-tax');
+            if (taxSel && tax) {
+                const want = String(parseFloat(tax));
+                [...taxSel.options].forEach(function (o) { if (o.value === want) taxSel.value = o.value; });
+            }
             menu.hidden = true;
+            if (window.fluxxTaxCalc) window.fluxxTaxCalc.bindLineRow(row, recalcTotal);
             recalcTotal();
         });
         row.querySelector('.fx-line-remove').addEventListener('click', function () {
             if (tbody.querySelectorAll('.fx-line-row').length <= 1) {
-                hidden.value = ''; search.value = ''; qty.value = ''; price.value = '';
-                recalcTotal();
-                return;
+                hidden.value = ''; search.value = ''; qty.value = '1'; price.value = ''; if (hsn) hsn.value = '';
+                if (window.fluxxTaxCalc) window.fluxxTaxCalc.bindLineRow(row, recalcTotal);
+                recalcTotal(); return;
             }
-            row.remove();
-            reindex();
+            row.remove(); reindex();
         });
-        qty.addEventListener('input', recalcTotal);
-        price.addEventListener('input', recalcTotal);
+        if (window.fluxxTaxCalc) window.fluxxTaxCalc.bindLineRow(row, recalcTotal);
         row.querySelectorAll('.fx-num').forEach(function (inp) {
             inp.addEventListener('input', function () {
-                var allowDecimal = inp.getAttribute('inputmode') === 'decimal';
-                var cleaned = allowDecimal
-                    ? inp.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1')
-                    : inp.value.replace(/[^0-9]/g, '');
+                var allowDecimal = inp.classList.contains('fx-line-price') || inp.classList.contains('fx-disc-val') || inp.getAttribute('inputmode') === 'decimal';
+                var cleaned = allowDecimal ? inp.value.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1') : inp.value.replace(/[^0-9]/g, '');
                 if (inp.value !== cleaned) inp.value = cleaned;
             });
         });
     }
-
     tbody.querySelectorAll('.fx-line-row').forEach(bindRow);
     document.addEventListener('click', function (e) {
-        if (!e.target.closest('.fx-ac')) {
-            tbody.querySelectorAll('.fx-ac-menu').forEach(function (m) { m.hidden = true; });
-        }
+        if (!e.target.closest('.fx-ac')) tbody.querySelectorAll('.fx-ac-menu').forEach(function (m) { m.hidden = true; });
     });
-
-    document.getElementById('btnAddLine').addEventListener('click', function () {
+    function addLine() {
         const i = tbody.querySelectorAll('.fx-line-row').length;
         tbody.insertAdjacentHTML('beforeend', tpl.replace(/__i__/g, String(i)));
         bindRow(tbody.lastElementChild);
+        reindex();
         tbody.lastElementChild.querySelector('.fx-line-search').focus();
-    });
-
+    }
+    document.getElementById('btnAddLine')?.addEventListener('click', addLine);
+    document.getElementById('btnAddLineBottom')?.addEventListener('click', addLine);
     document.getElementById('btnLoadBom').addEventListener('click', function () {
-        fetch('@Url.Action("Products", "Bom")')
-            .then(function (r) { return r.json(); })
-            .then(function (data) {
-                const items = (data && data.items) || [];
-                    if (!items.length) {
-                        if (typeof Swal !== 'undefined') {
-                            Swal.fire({ icon: 'info', title: 'Product Kit empty', text: 'Add products under Orders & Shipments → Product Kit first.', confirmButtonColor: '#0d9488' });
-                        } else {
-                            alert('Product Kit is empty. Add products in Product Kit first.');
-                        }
-                        return;
-                    }
-                tbody.innerHTML = '';
-                items.forEach(function (it, i) {
-                    tbody.insertAdjacentHTML('beforeend', tpl.replace(/__i__/g, String(i)));
-                    const row = tbody.lastElementChild;
-                    bindRow(row);
-                    row.querySelector('.fx-line-id').value = it.electronicId;
-                    row.querySelector('.fx-line-search').value = it.label || '';
-                    row.querySelector('.fx-line-qty').value = it.quantity || 1;
-                    row.querySelector('.fx-line-price').value = it.unitPrice || '';
-                });
-                recalcTotal();
+        fetch('@Url.Action("Products", "Bom")').then(function (r) { return r.json(); }).then(function (data) {
+            const items = (data && data.items) || [];
+            if (!items.length) {
+                if (typeof Swal !== 'undefined') Swal.fire({ icon: 'info', title: 'Product Kit empty', text: 'Add products under Orders & Shipments → Product Kit first.', confirmButtonColor: '#0d9488' });
+                else alert('Product Kit is empty. Add products in Product Kit first.');
+                return;
+            }
+            tbody.innerHTML = '';
+            items.forEach(function (it, i) {
+                tbody.insertAdjacentHTML('beforeend', tpl.replace(/__i__/g, String(i)));
+                const row = tbody.lastElementChild;
+                bindRow(row);
+                row.querySelector('.fx-line-id').value = it.electronicId;
+                row.querySelector('.fx-line-search').value = it.label || '';
+                row.querySelector('.fx-line-qty').value = it.quantity || 1;
+                row.querySelector('.fx-line-price').value = it.unitPrice || '';
             });
+            recalcTotal();
+        });
     });
-
     function toggleOtherSource() {
         const isOther = $('#Lead_Source').val() === 'Other';
         $('#Other_Source').prop('disabled', !isOther);

@@ -1,0 +1,161 @@
+@model Inventory.Models.InvoicePreviewModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Invoice Preview";
+    string Inr(decimal n) => n.ToString("N4", System.Globalization.CultureInfo.GetCultureInfo("en-IN"));
+}
+
+<div class="fx-form-page">
+    <div class="page-hero d-flex justify-content-between align-items-start flex-wrap no-print">
+        <div>
+            <h1>Invoice preview</h1>
+            <p>@Model.Invoice_No — review before sharing or printing.</p>
+        </div>
+        <div class="d-flex" style="gap:.5rem;">
+            <a asp-action="Index" class="btn btn-fx-outline">Back to list</a>
+            <a asp-action="Create" class="btn btn-fx-outline">New invoice</a>
+            <button type="button" class="btn btn-fx" onclick="window.print()"><i class="fas fa-print mr-1"></i> Print</button>
+        </div>
+    </div>
+
+    <div class="fx-invoice-sheet card fx-card">
+        <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-start flex-wrap mb-4">
+                <div class="d-flex align-items-start" style="gap:1rem;">
+                    @if (!string.IsNullOrWhiteSpace(Model.Company_LogoUrl))
+                    {
+                        <img src="@Model.Company_LogoUrl" alt="Company logo" class="fx-inv-logo" />
+                    }
+                    <div>
+                        <h2 class="mb-1">@(Model.Billing_Company ?? "Fluxx Inventory")</h2>
+                        @if (!string.IsNullOrWhiteSpace(Model.Company_Address))
+                        {
+                            <div class="text-muted small">@Model.Company_Address</div>
+                        }
+                        <div class="text-muted small">
+                            @if (!string.IsNullOrWhiteSpace(Model.Company_Gstin)) { <span>GSTIN: @Model.Company_Gstin</span> }
+                            @if (!string.IsNullOrWhiteSpace(Model.Company_Phone)) { <span class="ml-2">@Model.Company_Phone</span> }
+                            @if (!string.IsNullOrWhiteSpace(Model.Company_Email)) { <span class="ml-2">@Model.Company_Email</span> }
+                        </div>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-uppercase text-muted small font-weight-bold">@Model.Invoice_Type Invoice</div>
+                    <div class="h4 mb-1">@Model.Invoice_No</div>
+                    <div class="small">Date: @Model.Invoice_Date.ToString("dd MMM yyyy")</div>
+                    @if (Model.Due_Date.HasValue)
+                    {
+                        <div class="small">Due: @Model.Due_Date.Value.ToString("dd MMM yyyy")</div>
+                    }
+                    <div class="small mt-1">
+                        <span class="badge badge-fx badge-fx-info">@Model.Status</span>
+                        <span class="badge badge-secondary">@Model.Payment_Status</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <div class="text-uppercase text-muted small font-weight-bold mb-1">Bill to</div>
+                    <div class="font-weight-bold">@Model.Business_Name</div>
+                    @if (!string.IsNullOrWhiteSpace(Model.Contact_Name))
+                    {
+                        <div>@Model.Contact_Name</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.Contact_Phone))
+                    {
+                        <div class="small text-muted">@Model.Contact_Phone</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.Ship_GSTIN))
+                    {
+                        <div class="small">GSTIN: @Model.Ship_GSTIN</div>
+                    }
+                </div>
+                <div class="col-md-6">
+                    <div class="text-uppercase text-muted small font-weight-bold mb-1">Ship to</div>
+                    <div>@Model.Ship_Address1</div>
+                    @if (!string.IsNullOrWhiteSpace(Model.Ship_Address2))
+                    {
+                        <div>@Model.Ship_Address2</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.Ship_Pincode))
+                    {
+                        <div>PIN @Model.Ship_Pincode</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.PO_Number))
+                    {
+                        <div class="small mt-2">PO: @Model.PO_Number</div>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(Model.Payment_Terms))
+                    {
+                        <div class="small">Payment terms: @Model.Payment_Terms</div>
+                    }
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table fx-table mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Product</th>
+                            <th>HSN</th>
+                            <th class="text-right">Qty</th>
+                            <th class="text-right">Rate</th>
+                            <th class="text-right">Discount</th>
+                            <th class="text-right">Tax</th>
+                            <th class="text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @{ var n = 1; }
+                    @foreach (var line in Model.LineItems)
+                    {
+                        <tr>
+                            <td>@(n++)</td>
+                            <td>@line.Product_Label</td>
+                            <td>@(line.HSN_Code ?? "—")</td>
+                            <td class="text-right">@line.Quantity.ToString("0.####") @line.Unit_Of_Measure</td>
+                            <td class="text-right">@Inr(line.Unit_Price)</td>
+                            <td class="text-right">@Inr(line.Discount_Amount)</td>
+                            <td class="text-right">@Inr(line.Tax_Amount) <span class="text-muted small">(@line.Tax_Percent.ToString("0.##")%)</span></td>
+                            <td class="text-right font-weight-bold">@Inr(line.Line_Total > 0 ? line.Line_Total : line.Quantity * line.Unit_Price + line.Tax_Amount)</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="row mt-4">
+                <div class="col-md-6">
+                    @if (!string.IsNullOrWhiteSpace(Model.Remarks))
+                    {
+                        <div class="text-uppercase text-muted small font-weight-bold mb-1">Notes</div>
+                        <div class="small">@Model.Remarks</div>
+                    }
+                </div>
+                <div class="col-md-6">
+                    <div class="fx-inv-totals ml-auto">
+                        <div class="d-flex justify-content-between"><span>Sub total</span><strong>₹ @Inr(Model.SubTotal)</strong></div>
+                        <div class="d-flex justify-content-between"><span>Discount</span><strong>₹ @Inr(Model.TotalDiscount)</strong></div>
+                        <div class="d-flex justify-content-between"><span>Tax</span><strong>₹ @Inr(Model.TotalTax)</strong></div>
+                        <hr />
+                        <div class="d-flex justify-content-between h5 mb-0"><span>Grand total</span><strong>₹ @Inr(Model.GrandTotal > 0 ? Model.GrandTotal : Model.Amount)</strong></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.fx-inv-logo { max-height: 72px; max-width: 160px; object-fit: contain; }
+.fx-inv-totals { max-width: 320px; background: #f8fafc; border-radius: 12px; padding: 1rem 1.25rem; }
+.fx-inv-tabs .nav-link { color: #64748b; border: none; border-bottom: 2px solid transparent; border-radius: 0; }
+.fx-inv-tabs .nav-link.active { color: #2563eb; border-bottom-color: #2563eb; font-weight: 600; background: transparent; }
+@@media print {
+    .no-print, .sidebar, .topbar, .sticky-footer, .scroll-to-top, #accordionSidebar, .navbar { display: none !important; }
+    #content-wrapper, #content, .container-fluid, .fx-form-page { margin: 0 !important; padding: 0 !important; width: 100% !important; }
+    .fx-invoice-sheet { box-shadow: none !important; border: none !important; }
+}
+</style>

@@ -23,6 +23,9 @@
     <a class="fx-settings-subnav-link @(section == "lookups" ? "active" : "")" asp-controller="Settings" asp-action="Lookups">
         <i class="fas fa-list"></i> Lookups
     </a>
+    <a class="fx-settings-subnav-link @(section == "automation" ? "active" : "")" asp-action="Automation">
+        <i class="fas fa-robot"></i> Automation
+    </a>
     <a class="fx-settings-subnav-link @(section == "approvals" ? "active" : "")" asp-controller="ApprovalWorkflow" asp-action="Index">
         <i class="fas fa-clipboard-check"></i> Approval Workflow
     </a>

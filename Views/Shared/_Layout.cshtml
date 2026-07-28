@@ -1,4 +1,6 @@
-﻿@using Inventory.Security
+﻿@using System.Security.Claims
+@using DataLayer
+@using Inventory.Security
 @{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString() ?? "";
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString() ?? "";
@@ -9,9 +11,19 @@
     var catalogOpen = currentController is "InventoryControl" or "Category" or "MasterPrices";
     var partnersOpen = currentController is "Supplier" or "Warehouse";
     var inventoryOpsOpen = currentController is "Documents" or "StockReceive";
-    var salesOpen = currentController is "Distribution" or "Bom" or "Invoice";
-    var paymentsOpen = currentController == "Payment";
-    var expenseOpen = currentController == "Expense";
+    var salesOpen = currentController is "Distribution" or "Bom";
+    var financeOpen = currentController is "Payment" or "Expense" or "Invoice" or "Approval";
+    var settingsOpen = currentController is "Settings" or "ApprovalWorkflow";
+    var userRole = User?.FindFirst(ClaimTypes.Role)?.Value;
+    if (string.IsNullOrWhiteSpace(userRole))
+        userRole = User?.IsInRole("Admin") == true ? "Admin" : "User";
+    var userEmail = User?.FindFirst(ClaimTypes.Email)?.Value;
+    var pendingApprovals = 0;
+    if (canAccess("Approvals") && int.TryParse(User?.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var layoutUserId))
+    {
+        try { pendingApprovals = new ApprovalWorkflowStore().GetPendingForUser(layoutUserId).Rows.Count; }
+        catch { /* keep nav resilient if approval DB is unavailable */ }
+    }
 }
 <!DOCTYPE html>
 <html lang="en">
@@ -19,7 +31,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <title>@(ViewData["Title"] ?? "Fluxx Inventory") · Fluxx</title>
+    <title>@(ViewData["Title"] ?? "Fluxx ERP") · Fluxx ERP</title>
 
     <link href="~/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
@@ -34,7 +46,7 @@
                 <div class="sidebar-brand-icon">
                     <i class="fas fa-cube"></i>
                 </div>
-                <div class="sidebar-brand-text mx-2">Fluxx</div>
+                <div class="sidebar-brand-text mx-2">Fluxx ERP</div>
             </a>
 
             <hr class="sidebar-divider my-0">
@@ -42,7 +54,7 @@
             <li class="nav-item @(currentController == "Dashboard" ? "active" : "")">
                 <a class="nav-link" asp-controller="Dashboard" asp-action="Index">
                     <i class="fas fa-fw fa-tachometer-alt"></i>
-                    <span>Dashboard</span>
+                    <span>Command Center</span>
                 </a>
             </li>
 
@@ -50,7 +62,7 @@
                  canAccess("Suppliers") || canAccess("Warehouses"))
             {
                 <hr class="sidebar-divider">
-                <div class="sidebar-heading">Master Data</div>
+                <div class="sidebar-heading">Masters</div>
             }
 
             @if (canAccess("Products") || canAccess("Categories") || canAccess("Pricing"))
@@ -60,31 +72,25 @@
                        data-target="#collapseCatalog" aria-expanded="@(catalogOpen.ToString().ToLowerInvariant())"
                        aria-controls="collapseCatalog">
                         <i class="fas fa-fw fa-boxes"></i>
-                        <span>Product Catalog</span>
+                        <span>Item Master</span>
                     </a>
                     <div id="collapseCatalog" class="collapse @(catalogOpen ? "show" : "")" data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
-                            <h6 class="collapse-header">Catalog Management</h6>
+                            <h6 class="collapse-header">Product Masters</h6>
                             @if (canAccess("Products"))
                             {
-                                <a class="collapse-item @(isPage("InventoryControl", "GetElectronicData") || isPage("InventoryControl", "EditElectronic") || isPage("InventoryControl", "AdjustStock") ? "active" : "")"
-                                   asp-controller="InventoryControl" asp-action="GetElectronicData">Products</a>
-                                <a class="collapse-item @(isPage("InventoryControl", "AddElectronic") ? "active" : "")"
-                                   asp-controller="InventoryControl" asp-action="AddElectronic">Add Product</a>
-                                <a class="collapse-item @(isPage("InventoryControl", "BulkUpload") ? "active" : "")"
-                                   asp-controller="InventoryControl" asp-action="BulkUpload">Import from Excel</a>
-                                <a class="collapse-item @(isPage("InventoryControl", "LowStock") ? "active" : "")"
-                                   asp-controller="InventoryControl" asp-action="LowStock">Low Stock</a>
+                                <a class="collapse-item @(currentController == "InventoryControl" ? "active" : "")"
+                                   asp-controller="InventoryControl" asp-action="GetElectronicData">Item Master</a>
                             }
                             @if (canAccess("Categories"))
                             {
                                 <a class="collapse-item @(currentController == "Category" ? "active" : "")"
-                                   asp-controller="Category" asp-action="Index">Categories</a>
+                                   asp-controller="Category" asp-action="Index">Item Groups</a>
                             }
                             @if (canAccess("Pricing"))
                             {
                                 <a class="collapse-item @(currentController == "MasterPrices" ? "active" : "")"
-                                   asp-controller="MasterPrices" asp-action="Index">Master Prices</a>
+                                   asp-controller="MasterPrices" asp-action="Index">Price Lists</a>
                             }
                         </div>
                     </div>
@@ -98,15 +104,15 @@
                        data-target="#collapsePartners" aria-expanded="@(partnersOpen.ToString().ToLowerInvariant())"
                        aria-controls="collapsePartners">
                         <i class="fas fa-fw fa-building"></i>
-                        <span>Partners &amp; Locations</span>
+                        <span>Business Partners</span>
                     </a>
                     <div id="collapsePartners" class="collapse @(partnersOpen ? "show" : "")" data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
-                            <h6 class="collapse-header">Business Masters</h6>
+                            <h6 class="collapse-header">Party &amp; Sites</h6>
                             @if (canAccess("Suppliers"))
                             {
                                 <a class="collapse-item @(currentController == "Supplier" ? "active" : "")"
-                                   asp-controller="Supplier" asp-action="Index">Suppliers</a>
+                                   asp-controller="Supplier" asp-action="Index">Vendors</a>
                             }
                             @if (canAccess("Warehouses"))
                             {
@@ -121,33 +127,33 @@
             @if (canAccess("Documents") || canAccess("Stock"))
             {
                 <hr class="sidebar-divider">
-                <div class="sidebar-heading">Inventory Operations</div>
+                <div class="sidebar-heading">Supply Chain</div>
                 <li class="nav-item @(inventoryOpsOpen ? "active" : "")">
                     <a class="nav-link @(inventoryOpsOpen ? "" : "collapsed")" href="#" data-toggle="collapse"
                        data-target="#collapseOperations" aria-expanded="@(inventoryOpsOpen.ToString().ToLowerInvariant())"
                        aria-controls="collapseOperations">
                         <i class="fas fa-fw fa-exchange-alt"></i>
-                        <span>Inventory Transactions</span>
+                        <span>Inventory Control</span>
                     </a>
                     <div id="collapseOperations" class="collapse @(inventoryOpsOpen ? "show" : "")" data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
                             @if (canAccess("Documents"))
                             {
-                                <h6 class="collapse-header">Goods Documents</h6>
+                                <h6 class="collapse-header">Goods Movement</h6>
                                 <a class="collapse-item @(isPage("Documents", "Index") ? "active" : "")"
-                                   asp-controller="Documents" asp-action="Index">GRN / DCN Register</a>
+                                   asp-controller="Documents" asp-action="Index">Document Register</a>
                                 <a class="collapse-item @(isPage("Documents", "CreateGRN") ? "active" : "")"
-                                   asp-controller="Documents" asp-action="CreateGRN">Receive Stock (GRN)</a>
+                                   asp-controller="Documents" asp-action="CreateGRN">Goods Receipt (GRN)</a>
                                 <a class="collapse-item @(isPage("Documents", "CreateDCN") ? "active" : "")"
-                                   asp-controller="Documents" asp-action="CreateDCN">Dispatch Stock (DCN)</a>
+                                   asp-controller="Documents" asp-action="CreateDCN">Goods Issue (DCN)</a>
                             }
                             @if (canAccess("Stock"))
                             {
                                 <h6 class="collapse-header">Stock Ledger</h6>
                                 <a class="collapse-item @(isPage("StockReceive", "Index") || isPage("StockReceive", "Create") ? "active" : "")"
-                                   asp-controller="StockReceive" asp-action="Index">Stock Receipts</a>
+                                   asp-controller="StockReceive" asp-action="Index">Stock Ledger</a>
                                 <a class="collapse-item @(isPage("StockReceive", "Movements") ? "active" : "")"
-                                   asp-controller="StockReceive" asp-action="Movements">Stock Movements</a>
+                                   asp-controller="StockReceive" asp-action="Movements">Stock Transfers</a>
                             }
                         </div>
                     </div>
@@ -157,96 +163,85 @@
             @if (canAccess("Orders"))
             {
                 <hr class="sidebar-divider">
-                <div class="sidebar-heading">Sales &amp; Distribution</div>
+                <div class="sidebar-heading">Sales</div>
                 <li class="nav-item @(salesOpen ? "active" : "")">
                     <a class="nav-link @(salesOpen ? "" : "collapsed")" href="#" data-toggle="collapse"
                        data-target="#collapseSales" aria-expanded="@(salesOpen.ToString().ToLowerInvariant())"
                        aria-controls="collapseSales">
                         <i class="fas fa-fw fa-shipping-fast"></i>
-                        <span>Orders &amp; Shipments</span>
+                        <span>Order Management</span>
                     </a>
                     <div id="collapseSales" class="collapse @(salesOpen ? "show" : "")" data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
-                            <h6 class="collapse-header">Outbound Operations</h6>
+                            <h6 class="collapse-header">Sales &amp; Logistics</h6>
                             <a class="collapse-item @(isPage("Distribution", "CreateOrder") || isPage("Distribution", "OrderSuccess") ? "active" : "")"
-                               asp-controller="Distribution" asp-action="CreateOrder">Create Customer Order</a>
+                               asp-controller="Distribution" asp-action="CreateOrder">Sales Orders</a>
                             <a class="collapse-item @(currentController == "Bom" ? "active" : "")"
-                               asp-controller="Bom" asp-action="Index">Product Kit</a>
+                               asp-controller="Bom" asp-action="Index">Bill of Materials</a>
                             <a class="collapse-item @(isPage("Distribution", "ViewShipment") ? "active" : "")"
                                asp-controller="Distribution" asp-action="ViewShipment">Shipment Register</a>
                             <a class="collapse-item @(isPage("Distribution", "Tracking") ? "active" : "")"
-                               asp-controller="Distribution" asp-action="Tracking">Track Shipment</a>
+                               asp-controller="Distribution" asp-action="Tracking">Shipment Tracking</a>
                             <a class="collapse-item @(isPage("Distribution", "DistributionCenter") ? "active" : "")"
-                               asp-controller="Distribution" asp-action="DistributionCenter">Distribution Network</a>
-                            <a class="collapse-item @(currentController == "Invoice" ? "active" : "")"
-                               asp-controller="Invoice" asp-action="Index">Invoices</a>
+                               asp-controller="Distribution" asp-action="DistributionCenter">Distribution Centers</a>
                         </div>
                     </div>
                 </li>
             }
 
-            @if (canAccess("Payments") || canAccess("Expenses"))
+            @if (canAccess("Invoices") || canAccess("Payments") || canAccess("Expenses") || canAccess("Approvals"))
             {
                 <hr class="sidebar-divider">
                 <div class="sidebar-heading">Finance</div>
-            }
-
-            @if (canAccess("Payments"))
-            {
-                <li class="nav-item @(paymentsOpen ? "active" : "")">
-                    <a class="nav-link @(paymentsOpen ? "" : "collapsed")" href="#" data-toggle="collapse"
-                       data-target="#collapsePayments" aria-expanded="@(paymentsOpen.ToString().ToLowerInvariant())"
-                       aria-controls="collapsePayments">
-                        <i class="fas fa-fw fa-rupee-sign"></i>
-                        <span>Payments</span>
+                <li class="nav-item @(financeOpen ? "active" : "")">
+                    <a class="nav-link @(financeOpen ? "" : "collapsed")" href="#" data-toggle="collapse"
+                       data-target="#collapseFinance" aria-expanded="@(financeOpen.ToString().ToLowerInvariant())"
+                       aria-controls="collapseFinance">
+                        <i class="fas fa-fw fa-file-invoice-dollar"></i>
+                        <span>Finance &amp; Accounts</span>
                     </a>
-                    <div id="collapsePayments" class="collapse @(paymentsOpen ? "show" : "")" data-parent="#accordionSidebar">
+                    <div id="collapseFinance" class="collapse @(financeOpen ? "show" : "")" data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
-                            <h6 class="collapse-header">Collections</h6>
-                            <a class="collapse-item @(isPage("Payment", "Receipts") || isPage("Payment", "Create") ? "active" : "")"
-                               asp-controller="Payment" asp-action="Receipts">Payments / Receipts</a>
+                            <h6 class="collapse-header">Financial Documents</h6>
+                            @if (canAccess("Invoices"))
+                            {
+                                <a class="collapse-item @(currentController == "Invoice" ? "active" : "")"
+                                   asp-controller="Invoice" asp-action="Index">Sales Invoices</a>
+                            }
+                            @if (canAccess("Payments"))
+                            {
+                                <a class="collapse-item @(isPage("Payment", "Receipts") || isPage("Payment", "Create") ? "active" : "")"
+                                   asp-controller="Payment" asp-action="Receipts">Receipts &amp; Payments</a>
+                            }
+                            @if (canAccess("Expenses"))
+                            {
+                                <a class="collapse-item @(currentController == "Expense" ? "active" : "")"
+                                   asp-controller="Expense" asp-action="Booking">Expense Vouchers</a>
+                            }
+                            @if (canAccess("Approvals"))
+                            {
+                                <a class="collapse-item @(currentController == "Approval" ? "active" : "")"
+                                   asp-controller="Approval" asp-action="Inbox">
+                                    Approval Inbox
+                                    @if (pendingApprovals > 0)
+                                    {
+                                        <span class="fx-nav-badge">@pendingApprovals</span>
+                                    }
+                                </a>
+                            }
                         </div>
                     </div>
-                </li>
-            }
-
-            @if (canAccess("Expenses"))
-            {
-                <li class="nav-item @(expenseOpen ? "active" : "")">
-                    <a class="nav-link @(expenseOpen ? "" : "collapsed")" href="#" data-toggle="collapse"
-                       data-target="#collapseExpense" aria-expanded="@(expenseOpen.ToString().ToLowerInvariant())"
-                       aria-controls="collapseExpense">
-                        <i class="fas fa-fw fa-receipt"></i>
-                        <span>Expense</span>
-                    </a>
-                    <div id="collapseExpense" class="collapse @(expenseOpen ? "show" : "")" data-parent="#accordionSidebar">
-                        <div class="bg-white py-2 collapse-inner rounded">
-                            <h6 class="collapse-header">Outgoings</h6>
-                            <a class="collapse-item @(currentController == "Expense" ? "active" : "")"
-                               asp-controller="Expense" asp-action="Booking">Expense Booking</a>
-                        </div>
-                    </div>
-                </li>
-            }
-
-            @if (canAccess("Approvals"))
-            {
-                <li class="nav-item @(currentController == "Approval" ? "active" : "")">
-                    <a class="nav-link" asp-controller="Approval" asp-action="Inbox">
-                        <i class="fas fa-fw fa-clipboard-check"></i>
-                        <span>Approval Inbox</span>
-                    </a>
                 </li>
             }
 
             @if (canAccess("Reports"))
             {
                 <hr class="sidebar-divider">
-                <div class="sidebar-heading">Analytics</div>
+                <div class="sidebar-heading">Intelligence</div>
                 <li class="nav-item @(currentController == "Reports" ? "active" : "")">
                     <a class="nav-link" asp-controller="Reports" asp-action="Index">
                         <i class="fas fa-fw fa-chart-bar"></i>
-                        <span>Reports</span>
+                        <span>Business Reports</span>
                     </a>
                 </li>
             }
@@ -255,7 +250,7 @@
             {
                 <hr class="sidebar-divider">
                 <div class="sidebar-heading">Administration</div>
-                <li class="nav-item @(currentController == "Settings" ? "active" : "")">
+                <li class="nav-item @(settingsOpen ? "active" : "")">
                     <a class="nav-link" asp-controller="Settings" asp-action="Index">
                         <i class="fas fa-fw fa-cog"></i>
                         <span>Settings</span>
@@ -277,51 +272,91 @@
                     </button>
 
                     <div class="fluxx-page-title d-none d-sm-flex">
-                        <span class="fx-brand-chip">Fluxx</span>
+                        <span class="fx-brand-chip">Fluxx ERP</span>
                         <div>
-                            <span class="fx-topbar-eyebrow">Inventory</span>
-                            <strong class="fx-topbar-title">@(ViewData["Title"] ?? "Overview")</strong>
+                            <span class="fx-topbar-eyebrow">Enterprise</span>
+                            <strong class="fx-topbar-title">@(ViewData["Title"] ?? "Command Center")</strong>
                         </div>
                     </div>
 
                     <div class="fx-topbar-search d-none d-lg-flex ml-4">
                         <i class="fas fa-search"></i>
-                        <input type="search" class="form-control" placeholder="Search modules, products…" disabled title="Coming soon" />
+                        <input type="search" class="form-control" placeholder="Search modules, items, documents…" disabled title="Coming soon" />
                     </div>
 
                     <ul class="navbar-nav ml-auto align-items-center">
-                        <li class="nav-item d-none d-md-block">
-                            <span class="fx-topbar-icon-btn" title="Reports">
-                                <i class="fas fa-chart-pie"></i>
-                            </span>
-                        </li>
-                        <li class="nav-item d-none d-md-block mx-1">
-                            <span class="fx-topbar-icon-btn" title="Documents">
-                                <i class="fas fa-folder-open"></i>
-                            </span>
-                        </li>
+                        @if (canAccess("Approvals"))
+                        {
+                            <li class="nav-item mx-1">
+                                <a class="fx-topbar-icon-btn @(pendingApprovals > 0 ? "has-alert" : "")"
+                                   asp-controller="Approval" asp-action="Inbox"
+                                   title="@(pendingApprovals > 0 ? pendingApprovals + " pending approval(s)" : "Approval inbox")">
+                                    <i class="fas fa-bell"></i>
+                                    @if (pendingApprovals > 0)
+                                    {
+                                        <span class="fx-alert-dot">@(pendingApprovals > 9 ? "9+" : pendingApprovals.ToString())</span>
+                                    }
+                                </a>
+                            </li>
+                        }
+                        @if (canAccess("Reports"))
+                        {
+                            <li class="nav-item d-none d-md-block mx-1">
+                                <a class="fx-topbar-icon-btn" asp-controller="Reports" asp-action="Index" title="Business Reports">
+                                    <i class="fas fa-chart-pie"></i>
+                                </a>
+                            </li>
+                        }
                         <li class="nav-item dropdown no-arrow ml-2">
                             <a class="nav-link dropdown-toggle fx-user-chip" href="#" id="userDropdown" role="button"
                                data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="fx-user-meta d-none d-lg-inline">
                                     <span class="fx-user-name">@(User?.Identity?.IsAuthenticated == true ? User.Identity.Name : "Guest")</span>
-                                    <span class="fx-user-role">@(User?.IsInRole("Admin") == true ? "Admin" : "User")</span>
+                                    <span class="fx-user-role">@userRole</span>
                                 </span>
                                 <span class="fluxx-avatar"><i class="fas fa-user"></i></span>
                             </a>
                             <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
                                 @if (User?.Identity?.IsAuthenticated == true)
                                 {
+                                    <div class="fx-user-dropdown-header">
+                                        <div class="font-weight-bold">@(User.Identity.Name)</div>
+                                        @if (!string.IsNullOrWhiteSpace(userEmail))
+                                        {
+                                            <div class="small text-muted">@userEmail</div>
+                                        }
+                                        <div class="small"><span class="badge badge-fx badge-fx-info">@userRole</span></div>
+                                    </div>
+                                    <div class="dropdown-divider"></div>
+                                    @if (canAccess("Approvals"))
+                                    {
+                                        <a class="dropdown-item" asp-controller="Approval" asp-action="Inbox">
+                                            <i class="fas fa-clipboard-check fa-sm fa-fw mr-2 text-gray-400"></i>
+                                            My Approvals
+                                            @if (pendingApprovals > 0)
+                                            {
+                                                <span class="badge badge-fx badge-fx-warning ml-1">@pendingApprovals</span>
+                                            }
+                                        </a>
+                                    }
+                                    @if (canAccess("Settings"))
+                                    {
+                                        <a class="dropdown-item" asp-controller="Settings" asp-action="Index">
+                                            <i class="fas fa-cog fa-sm fa-fw mr-2 text-gray-400"></i>
+                                            Settings
+                                        </a>
+                                        <div class="dropdown-divider"></div>
+                                    }
                                     <a class="dropdown-item" asp-controller="Login" asp-action="Logout">
                                         <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-                                        Logout
+                                        Sign Out
                                     </a>
                                 }
                                 else
                                 {
                                     <a class="dropdown-item" asp-controller="Login" asp-action="Login">
                                         <i class="fas fa-sign-in-alt fa-sm fa-fw mr-2 text-gray-400"></i>
-                                        Login
+                                        Sign In
                                     </a>
                                 }
                             </div>
@@ -363,7 +398,7 @@
             <footer class="sticky-footer bg-white">
                 <div class="container my-auto">
                     <div class="copyright text-center my-auto">
-                        <span>Fluxx Inventory</span>
+                        <span>Fluxx ERP · Multi-user enterprise platform</span>
                     </div>
                 </div>
             </footer>

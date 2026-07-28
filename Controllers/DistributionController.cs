@@ -133,7 +133,8 @@ namespace Inventory.Controllers
 
             if (model.Order_Total_Cost <= 0 && model.LineItems.Any())
             {
-                model.Order_Total_Cost = model.LineItems.Sum(l => (l.Unit_Price ?? 0) * l.Quantity);
+                model.Order_Total_Cost = model.LineItems.Sum(l =>
+                    l.Line_Total > 0 ? l.Line_Total : (l.Unit_Price ?? 0) * l.Quantity);
                 ModelState.Remove(nameof(model.Order_Total_Cost));
             }
 
@@ -152,7 +153,15 @@ namespace Inventory.Controllers
             {
                 l.Electronic_Id,
                 l.Quantity,
-                Unit_Price = l.Unit_Price
+                Unit_Price = l.Unit_Price,
+                l.HSN_Code,
+                l.Unit_Of_Measure,
+                l.Discount_Type,
+                l.Discount_Value,
+                l.Discount_Amount,
+                l.Tax_Percent,
+                l.Tax_Amount,
+                l.Line_Total
             }));
 
             var first = model.LineItems[0];
@@ -243,6 +252,27 @@ namespace Inventory.Controllers
             ViewBag.Warehouses = WarehouseNameSelect(new Warehouse().GetAll());
             ViewBag.BillingCompanies = BillingCompanySelect();
             ViewBag.ShippingCompanies = ShippingCompanySelect();
+            ViewBag.TaxPercents = new SelectList(new[]
+            {
+                new SelectListItem("0%", "0"),
+                new SelectListItem("5%", "5"),
+                new SelectListItem("12%", "12"),
+                new SelectListItem("18%", "18"),
+                new SelectListItem("28%", "28")
+            }, "Value", "Text");
+            try
+            {
+                var percents = new List<SelectListItem>();
+                foreach (DataRow row in new FinanceMasterStore().GetTaxPercents().Rows)
+                {
+                    var rate = Convert.ToDecimal(row["RatePercent"]);
+                    percents.Add(new SelectListItem(row["Label"]?.ToString() ?? $"{rate:0.##}%",
+                        rate.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+                }
+                if (percents.Count > 0)
+                    ViewBag.TaxPercents = new SelectList(percents, "Value", "Text");
+            }
+            catch { /* optional until SQL deployed */ }
         }
 
         private SelectList ShippingCompanySelect()
@@ -303,6 +333,9 @@ namespace Inventory.Controllers
                 var name = row["Electronic_Name"]?.ToString() ?? "";
                 var stock = row["Electronic_CRStock"] == DBNull.Value ? 0 : Convert.ToInt32(row["Electronic_CRStock"]);
                 var price = row["Electronic_Price"] == DBNull.Value ? 0 : Convert.ToInt32(row["Electronic_Price"]);
+                var hsn = row.Table.Columns.Contains("HSN_Code") ? row["HSN_Code"]?.ToString() ?? "" : "";
+                var tax = row.Table.Columns.Contains("Tax_Percent") && row["Tax_Percent"] != DBNull.Value
+                    ? Convert.ToDecimal(row["Tax_Percent"]) : 18m;
                 list.Add(new
                 {
                     id = Convert.ToInt32(row["Electronic_Id"]),
@@ -310,6 +343,8 @@ namespace Inventory.Controllers
                     name,
                     stock,
                     price,
+                    hsn,
+                    tax,
                     label = $"{brand} · {name} (Stock: {stock})"
                 });
             }

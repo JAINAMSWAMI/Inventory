@@ -7,8 +7,8 @@
 <div class="fx-form-page">
     <div class="page-hero d-flex justify-content-between align-items-start flex-wrap">
         <div>
-            <h1>Create Invoice</h1>
-            <p>Tax / proforma invoice with customer mapping and line items.</p>
+            <h1>Invoices</h1>
+            <p>Standard invoice template — basic info, products, payment &amp; notes.</p>
         </div>
         <a asp-action="Index" class="btn btn-fx-outline">Back to list</a>
     </div>
@@ -18,10 +18,16 @@
             @Html.AntiForgeryToken()
             <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-            <div class="card fx-card fx-form-card mb-3">
-                <div class="card-body">
-                    <div class="fx-inv-section-label">Type</div>
-                    <div class="fx-type-toggle" role="group">
+            <ul class="nav nav-tabs fx-inv-tabs mb-0" id="invoiceTabs" role="tablist">
+                <li class="nav-item"><a class="nav-link active" data-toggle="tab" href="#tabBasic" role="tab">Basic Info</a></li>
+                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tabProducts" role="tab">Products</a></li>
+                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tabPayment" role="tab">Payment</a></li>
+                <li class="nav-item"><a class="nav-link" data-toggle="tab" href="#tabNotes" role="tab">Notes</a></li>
+            </ul>
+
+            <div class="tab-content card fx-card fx-form-card border-top-0 rounded-top-0 mb-3">
+                <div class="tab-pane fade show active p-3" id="tabBasic" role="tabpanel">
+                    <div class="fx-type-toggle mb-3" role="group">
                         <label class="@(Model.Invoice_Type == "Tax" ? "active" : "")">
                             <input type="radio" asp-for="Invoice_Type" value="Tax" /> Tax
                         </label>
@@ -29,12 +35,6 @@
                             <input type="radio" asp-for="Invoice_Type" value="Proforma" /> Proforma
                         </label>
                     </div>
-                </div>
-            </div>
-
-            <div class="card fx-card fx-form-card mb-3">
-                <div class="card-body">
-                    <div class="fx-inv-section-label">Segments</div>
                     <div class="form-row">
                         <div class="form-group col-md-3">
                             <label asp-for="Business_Segment"></label>
@@ -53,12 +53,6 @@
                             <select asp-for="Status" asp-items="ViewBag.Statuses" class="form-control"></select>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <div class="card fx-card fx-form-card mb-3">
-                <div class="card-body">
-                    <div class="fx-inv-section-label">Contact details</div>
                     <div class="form-row">
                         <div class="form-group col-md-6">
                             <label asp-for="Business_Name"></label> <span class="text-danger">*</span>
@@ -68,7 +62,7 @@
                                        placeholder="Type business / customer name…" required />
                                 <div class="fx-ac-menu" id="businessMenu" hidden></div>
                             </div>
-                            <span class="fx-field-hint" id="mappedHint">Mapped customer details fill automatically when you pick a match.</span>
+                            <span class="fx-field-hint" id="mappedHint">Mapped customer details fill when you pick a match.</span>
                         </div>
                         <div class="form-group col-md-3">
                             <label>Contact name</label>
@@ -84,17 +78,10 @@
                             <input asp-for="Contact_Phone" class="form-control" id="Contact_Phone">
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <div class="card fx-card fx-form-card mb-3">
-                <div class="card-body">
-                    <div class="fx-inv-section-label">Order details</div>
                     <div class="form-row">
                         <div class="form-group col-md-3">
                             <label>Invoice #</label>
                             <input class="form-control" value="@Model.Invoice_No" readonly>
-                            <span class="fx-field-hint">Final number assigned on save</span>
                         </div>
                         <div class="form-group col-md-3">
                             <label asp-for="Invoice_Date"></label> <span class="text-danger">*</span>
@@ -108,6 +95,8 @@
                             <label asp-for="Due_Date"></label>
                             <input asp-for="Due_Date" class="form-control" type="date">
                         </div>
+                    </div>
+                    <div class="form-row">
                         <div class="form-group col-md-3">
                             <label asp-for="PO_Number"></label>
                             <input asp-for="PO_Number" class="form-control">
@@ -116,49 +105,22 @@
                             <label asp-for="PO_Date"></label>
                             <input asp-for="PO_Date" class="form-control" type="date">
                         </div>
-                        <div class="form-group col-md-6">
-                            <label asp-for="Project_Title"></label>
-                            <input asp-for="Project_Title" class="form-control">
-                        </div>
                         <div class="form-group col-md-3">
-                            <label asp-for="Delivery_Terms"></label>
-                            <select asp-for="Delivery_Terms" asp-items="ViewBag.DeliveryTerms" class="form-control">
-                                <option value="">Select delivery terms</option>
-                            </select>
-                        </div>
-                        <div class="form-group col-md-3">
-                            <label asp-for="Payment_Terms"></label>
-                            <select asp-for="Payment_Terms" asp-items="ViewBag.PaymentTerms" class="form-control">
-                                <option value="">Select payment terms</option>
-                            </select>
+                            <label asp-for="Linked_Order_No"></label>
+                            <input asp-for="Linked_Order_No" class="form-control" placeholder="Customer order #">
                         </div>
                         <div class="form-group col-md-3">
                             <label asp-for="Warehouse_Name"></label>
                             <select asp-for="Warehouse_Name" asp-items="ViewBag.Warehouses" class="form-control"></select>
                         </div>
-                        <div class="form-group col-md-3">
-                            <label asp-for="Linked_Order_No"></label>
-                            <input asp-for="Linked_Order_No" class="form-control" placeholder="Optional order #">
-                        </div>
-                        <div class="form-group col-md-3">
-                            <label asp-for="Payment_Status"></label>
-                            <select asp-for="Payment_Status" asp-items="ViewBag.PaymentStatuses" class="form-control"></select>
-                        </div>
-                        <div class="form-group col-md-3">
-                            <label asp-for="Assignee"></label>
-                            <input asp-for="Assignee" class="form-control">
-                        </div>
                     </div>
-                </div>
-            </div>
-
-            <div class="card fx-card fx-form-card mb-3">
-                <div class="card-body">
+                    <div class="form-group">
+                        <label asp-for="Project_Title"></label>
+                        <input asp-for="Project_Title" class="form-control">
+                    </div>
                     <div class="d-flex justify-content-between align-items-center mb-2">
                         <div class="fx-inv-section-label mb-0">Shipping address</div>
-                        <label class="mb-0 small">
-                            <input asp-for="Ship_Same_As_Bill" type="checkbox" id="Ship_Same_As_Bill" /> Same as billing address
-                        </label>
+                        <label class="mb-0 small"><input asp-for="Ship_Same_As_Bill" type="checkbox" id="Ship_Same_As_Bill" /> Same as billing</label>
                     </div>
                     <div id="shipFields">
                         <div class="form-row">
@@ -183,11 +145,11 @@
                                 <input asp-for="Ship_Address2" class="form-control" id="Ship_Address2">
                             </div>
                             <div class="form-group col-md-3">
-                                <label asp-for="Ship_State_Id"></label>
+                                <label>State</label>
                                 <select asp-for="Ship_State_Id" asp-items="ViewBag.States" class="form-control" id="Ship_State_Id"></select>
                             </div>
                             <div class="form-group col-md-3">
-                                <label asp-for="Ship_City_Id"></label>
+                                <label>City</label>
                                 <select asp-for="Ship_City_Id" asp-items="ViewBag.Cities" class="form-control" id="Ship_City_Id"></select>
                             </div>
                             <div class="form-group col-md-3">
@@ -201,22 +163,26 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="card fx-card fx-form-card mb-3">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <strong>Line items</strong>
-                    <button type="button" class="btn btn-sm btn-fx" id="addLine"><i class="fas fa-plus"></i> Add line</button>
-                </div>
-                <div class="card-body p-0">
+                <div class="tab-pane fade p-3" id="tabProducts" role="tabpanel">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="fx-inv-section-label mb-0">Line items</div>
+                        <button type="button" class="btn btn-sm btn-fx" id="addLine"><i class="fas fa-plus mr-1"></i> ADD NEW</button>
+                    </div>
                     <div class="table-responsive fx-line-table-wrap">
                         <table class="table fx-table fx-line-table mb-0" id="lineTable">
                             <thead>
                                 <tr>
-                                    <th style="min-width:280px">Product</th>
+                                    <th style="min-width:200px">Product</th>
+                                    <th style="width:90px">HSN</th>
                                     <th style="width:120px">Qty</th>
-                                    <th style="width:140px">Unit price</th>
-                                    <th style="width:50px"></th>
+                                    <th style="width:100px">Rate</th>
+                                    <th style="width:140px">Discount</th>
+                                    <th style="width:100px">Discounted</th>
+                                    <th style="width:110px">Tax %</th>
+                                    <th style="width:90px">Tax</th>
+                                    <th style="width:100px">Total</th>
+                                    <th style="width:44px"></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -224,44 +190,124 @@
                             {
                                 <tr class="fx-line-row">
                                     <td>
-                                        <input type="hidden" name="LineItems[@i].Electronic_Id" class="fx-line-id" value="@Model.LineItems[i].Electronic_Id" />
-                                        <input type="text" name="LineItems[@i].Product_Label" class="form-control fx-line-label"
-                                               value="@Model.LineItems[i].Product_Label" placeholder="Product / description" required />
+                                        <div class="fx-ac">
+                                            <input type="hidden" name="LineItems[@i].Electronic_Id" class="fx-line-id" value="@Model.LineItems[i].Electronic_Id" />
+                                            <input type="text" name="LineItems[@i].Product_Label" class="form-control fx-line-search"
+                                                   value="@Model.LineItems[i].Product_Label" placeholder="Type to search product…" autocomplete="off" required />
+                                            <div class="fx-ac-menu" hidden></div>
+                                        </div>
                                     </td>
+                                    <td><input type="text" name="LineItems[@i].HSN_Code" class="form-control fx-line-hsn" value="@Model.LineItems[i].HSN_Code" /></td>
                                     <td>
-                                        <input type="number" step="0.0001" min="0.0001" name="LineItems[@i].Quantity"
-                                               class="form-control fx-num" value="@Model.LineItems[i].Quantity" required />
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" step="0.0001" min="0.0001" name="LineItems[@i].Quantity" class="form-control fx-num fx-line-qty" value="@Model.LineItems[i].Quantity" required />
+                                            <select name="LineItems[@i].Unit_Of_Measure" class="form-control" style="max-width:70px">
+                                                <option>Pcs</option><option>Kg</option><option>Box</option>
+                                            </select>
+                                        </div>
                                     </td>
+                                    <td><input type="number" step="0.01" min="0" name="LineItems[@i].Unit_Price" class="form-control fx-num fx-line-price" value="@Model.LineItems[i].Unit_Price" required /></td>
                                     <td>
-                                        <input type="number" step="0.01" min="0" name="LineItems[@i].Unit_Price"
-                                               class="form-control fx-num" value="@Model.LineItems[i].Unit_Price" required />
+                                        <div class="input-group input-group-sm">
+                                            <select name="LineItems[@i].Discount_Type" class="form-control fx-disc-type" style="max-width:70px">
+                                                <option value="Percent">%</option><option value="Amount">₹</option>
+                                            </select>
+                                            <input type="number" step="0.0001" min="0" name="LineItems[@i].Discount_Value" class="form-control fx-num fx-disc-val" value="@Model.LineItems[i].Discount_Value" />
+                                            <input type="hidden" name="LineItems[@i].Discount_Amount" class="fx-disc-amt" value="@Model.LineItems[i].Discount_Amount" />
+                                        </div>
+                                    </td>
+                                    <td class="align-middle"><span class="fx-disc-price">0.0000</span></td>
+                                    <td>
+                                        <select name="LineItems[@i].Tax_Percent" class="form-control form-control-sm fx-tax-pct">
+                                            <option value="0">Select Tax</option>
+                                            <option value="5">5%</option><option value="12">12%</option>
+                                            <option value="18">18%</option><option value="28">28%</option>
+                                        </select>
+                                    </td>
+                                    <td class="align-middle"><span class="fx-tax-amt">0.0000</span>
+                                        <input type="hidden" name="LineItems[@i].Tax_Amount" class="fx-tax-amt-input" value="@Model.LineItems[i].Tax_Amount" />
+                                    </td>
+                                    <td class="align-middle"><span class="fx-line-total">0.0000</span>
+                                        <input type="hidden" name="LineItems[@i].Line_Total" class="fx-line-total-input" value="@Model.LineItems[i].Line_Total" />
                                     </td>
                                     <td class="text-right">
-                                        <button type="button" class="btn btn-fx-icon danger fx-remove-line"><i class="fas fa-trash-alt"></i></button>
+                                        <button type="button" class="btn btn-fx-icon danger fx-remove-line"><i class="fas fa-times"></i></button>
                                     </td>
                                 </tr>
                             }
                             </tbody>
                         </table>
                     </div>
+                    <div class="text-right mt-3">
+                        <div class="small text-muted">Sub total / tax / grand total update as you edit lines.</div>
+                        <strong>Invoice total: <span id="invGrandTotal">0.0000</span></strong>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade p-3" id="tabPayment" role="tabpanel">
+                    <div class="form-row">
+                        <div class="form-group col-md-4">
+                            <label asp-for="Payment_Status"></label>
+                            <select asp-for="Payment_Status" asp-items="ViewBag.PaymentStatuses" class="form-control"></select>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label asp-for="Payment_Terms"></label>
+                            <select asp-for="Payment_Terms" asp-items="ViewBag.PaymentTerms" class="form-control">
+                                <option value="">Select payment terms</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label asp-for="Delivery_Terms"></label>
+                            <select asp-for="Delivery_Terms" asp-items="ViewBag.DeliveryTerms" class="form-control">
+                                <option value="">Select delivery terms</option>
+                            </select>
+                        </div>
+                        <div class="form-group col-md-4">
+                            <label asp-for="Assignee"></label>
+                            <input asp-for="Assignee" class="form-control">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade p-3" id="tabNotes" role="tabpanel">
+                    <div class="form-group mb-0">
+                        <label asp-for="Remarks"></label>
+                        <textarea asp-for="Remarks" class="form-control" rows="5" placeholder="Internal notes / customer remarks"></textarea>
+                    </div>
                 </div>
             </div>
 
             <div class="fx-form-actions">
                 <a asp-action="Index" class="btn btn-fx-outline">Cancel</a>
-                <button type="submit" class="btn btn-fx"><i class="fas fa-save mr-1"></i> Save invoice</button>
+                <button type="button" class="btn btn-fx-outline" id="btnGoProducts">Products</button>
+                <button type="submit" class="btn btn-fx"><i class="fas fa-save mr-1"></i> Save &amp; Preview</button>
             </div>
         </form>
     </div>
 </div>
 
 @section Scripts {
+<script src="~/js/fluxx-lookups.js"></script>
+<script src="~/js/fluxx-tax-calc.js" asp-append-version="true"></script>
 <script>
 (() => {
+    const catalog = @Html.Raw(ViewBag.ProductCatalogJson ?? "[]");
     const menu = document.getElementById('businessMenu');
     const input = document.getElementById('Business_Name');
+    const tbody = document.querySelector('#lineTable tbody');
     const esc = s => String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     let timer;
+
+    document.querySelectorAll('.fx-type-toggle input').forEach(r => {
+        r.addEventListener('change', () => {
+            document.querySelectorAll('.fx-type-toggle label').forEach(l => l.classList.remove('active'));
+            r.closest('label').classList.add('active');
+        });
+    });
+
+    document.getElementById('btnGoProducts')?.addEventListener('click', () => {
+        $('a[href="#tabProducts"]').tab('show');
+    });
 
     input.addEventListener('input', () => {
         clearTimeout(timer);
@@ -269,26 +315,22 @@
         if (q.length < 2) { menu.hidden = true; return; }
         timer = setTimeout(() => {
             fetch('@Url.Action("SearchBusiness", "Invoice")?q=' + encodeURIComponent(q))
-                .then(r => r.json())
-                .then(rows => {
-                    if (!rows.length) {
-                        menu.innerHTML = '<div class="fx-ac-empty">No matching businesses — new customer will be created</div>';
-                        menu.hidden = false;
-                        return;
+                .then(r => r.json()).then(rows => {
+                    if (!Array.isArray(rows) || !rows.length) {
+                        menu.innerHTML = '<div class="fx-ac-empty">No matches</div>';
+                        menu.hidden = false; return;
                     }
-                    menu.innerHTML = rows.map(c =>
-                        `<button type="button" class="fx-ac-option"
-                            data-id="${c.id || ''}" data-name="${esc(c.name)}" data-title="${esc(c.contactTitle)}"
-                            data-contact="${esc(c.contactName)}" data-phone="${esc(c.phone)}"
-                            data-a1="${esc(c.address1)}" data-a2="${esc(c.address2)}"
-                            data-state="${c.stateId || ''}" data-city="${c.cityId || ''}"
-                            data-pin="${esc(c.pincode)}" data-gstin="${esc(c.gstin)}">
-                            <span class="fx-ac-title">${esc(c.name)}</span>
-                            <span class="fx-ac-meta">${esc(c.phone || c.email || c.contactName || '')}</span>
+                    menu.innerHTML = rows.map(p =>
+                        `<button type="button" class="fx-ac-option" data-id="${p.id||''}" data-name="${esc(p.name)}"
+                            data-title="${esc(p.contactTitle||'')}" data-cname="${esc(p.contactName||'')}" data-phone="${esc(p.phone||'')}"
+                            data-a1="${esc(p.address1||'')}" data-a2="${esc(p.address2||'')}" data-pin="${esc(p.pincode||'')}"
+                            data-gstin="${esc(p.gstin||'')}" data-state="${p.stateId||''}">
+                            <span class="fx-ac-title">${esc(p.name)}</span>
+                            <span class="fx-ac-meta">${esc(p.contactName||'')} ${esc(p.phone||'')}</span>
                          </button>`).join('');
                     menu.hidden = false;
                 });
-        }, 220);
+        }, 200);
     });
 
     menu.addEventListener('click', e => {
@@ -296,7 +338,7 @@
         if (!opt) return;
         document.getElementById('Customer_Id').value = opt.dataset.id || '';
         input.value = opt.dataset.name || '';
-        document.getElementById('Contact_Name').value = opt.dataset.contact || opt.dataset.name || '';
+        document.getElementById('Contact_Name').value = opt.dataset.cname || '';
         document.getElementById('Contact_Phone').value = opt.dataset.phone || '';
         document.getElementById('Ship_Consignee').value = opt.dataset.name || '';
         document.getElementById('Ship_Address1').value = opt.dataset.a1 || '';
@@ -308,31 +350,103 @@
         menu.hidden = true;
     });
 
-    document.addEventListener('click', e => {
-        if (!e.target.closest('.fx-ac')) menu.hidden = true;
-    });
+    function filterProducts(q) {
+        q = (q || '').trim().toLowerCase();
+        if (!q) return catalog.slice(0, 12);
+        return catalog.filter(p => (p.label || '').toLowerCase().indexOf(q) >= 0).slice(0, 12);
+    }
 
-    document.querySelectorAll('.fx-type-toggle input').forEach(r => {
-        r.addEventListener('change', () => {
-            document.querySelectorAll('.fx-type-toggle label').forEach(l => l.classList.remove('active'));
-            r.closest('label').classList.add('active');
+    function updateGrand() {
+        let t = 0;
+        tbody.querySelectorAll('.fx-line-total-input').forEach(el => t += parseFloat(el.value || '0') || 0);
+        document.getElementById('invGrandTotal').textContent = t.toFixed(4);
+    }
+
+    function bindProductRow(row) {
+        const search = row.querySelector('.fx-line-search');
+        const hidden = row.querySelector('.fx-line-id');
+        const acMenu = row.querySelector('.fx-ac-menu');
+        const price = row.querySelector('.fx-line-price');
+        const hsn = row.querySelector('.fx-line-hsn');
+        if (!search || !acMenu) return;
+
+        function renderMenu(items) {
+            if (!items.length) {
+                acMenu.innerHTML = '<div class="fx-ac-empty">No products found</div>';
+                acMenu.hidden = false; return;
+            }
+            acMenu.innerHTML = items.map(p =>
+                `<button type="button" class="fx-ac-option" data-id="${p.id}" data-label="${esc(p.label)}" data-price="${p.price}" data-hsn="${esc(p.hsn||'')}" data-tax="${p.tax||18}">
+                    <span class="fx-ac-title">${esc(p.brand)} · ${esc(p.name)}</span>
+                    <span class="fx-ac-meta">Stock: ${p.stock} · ₹${p.price}</span>
+                 </button>`).join('');
+            acMenu.hidden = false;
+        }
+
+        search.addEventListener('focus', () => renderMenu(filterProducts(search.value)));
+        search.addEventListener('input', () => { hidden.value = ''; renderMenu(filterProducts(search.value)); });
+        acMenu.addEventListener('mousedown', e => {
+            const opt = e.target.closest('.fx-ac-option');
+            if (!opt) return;
+            e.preventDefault();
+            hidden.value = opt.dataset.id || '';
+            search.value = opt.dataset.label || '';
+            if (price) price.value = opt.dataset.price || '0';
+            if (hsn) hsn.value = opt.dataset.hsn || '';
+            const taxSel = row.querySelector('.fx-tax-pct');
+            if (taxSel && opt.dataset.tax) {
+                const want = String(parseFloat(opt.dataset.tax));
+                [...taxSel.options].forEach(o => { if (o.value === want) taxSel.value = o.value; });
+            }
+            acMenu.hidden = true;
+            if (window.fluxxTaxCalc) window.fluxxTaxCalc.bindLineRow(row, updateGrand);
+            updateGrand();
         });
-    });
 
-    const tbody = document.querySelector('#lineTable tbody');
+        if (window.fluxxTaxCalc) window.fluxxTaxCalc.bindLineRow(row, updateGrand);
+    }
+
+    tbody.querySelectorAll('.fx-line-row').forEach(bindProductRow);
+
     document.getElementById('addLine').addEventListener('click', () => {
         const i = tbody.querySelectorAll('tr').length;
         const tr = document.createElement('tr');
         tr.className = 'fx-line-row';
         tr.innerHTML = `
             <td>
-                <input type="hidden" name="LineItems[${i}].Electronic_Id" class="fx-line-id" />
-                <input type="text" name="LineItems[${i}].Product_Label" class="form-control fx-line-label" placeholder="Product / description" required />
+                <div class="fx-ac">
+                    <input type="hidden" name="LineItems[${i}].Electronic_Id" class="fx-line-id" />
+                    <input type="text" name="LineItems[${i}].Product_Label" class="form-control fx-line-search" placeholder="Type to search product…" autocomplete="off" required />
+                    <div class="fx-ac-menu" hidden></div>
+                </div>
             </td>
-            <td><input type="number" step="0.0001" min="0.0001" name="LineItems[${i}].Quantity" class="form-control fx-num" value="1" required /></td>
-            <td><input type="number" step="0.01" min="0" name="LineItems[${i}].Unit_Price" class="form-control fx-num" value="0" required /></td>
-            <td class="text-right"><button type="button" class="btn btn-fx-icon danger fx-remove-line"><i class="fas fa-trash-alt"></i></button></td>`;
+            <td><input type="text" name="LineItems[${i}].HSN_Code" class="form-control fx-line-hsn" /></td>
+            <td>
+                <div class="input-group input-group-sm">
+                    <input type="number" step="0.0001" min="0.0001" name="LineItems[${i}].Quantity" class="form-control fx-num fx-line-qty" value="1" required />
+                    <select name="LineItems[${i}].Unit_Of_Measure" class="form-control" style="max-width:70px"><option>Pcs</option><option>Kg</option><option>Box</option></select>
+                </div>
+            </td>
+            <td><input type="number" step="0.01" min="0" name="LineItems[${i}].Unit_Price" class="form-control fx-num fx-line-price" value="0" required /></td>
+            <td>
+                <div class="input-group input-group-sm">
+                    <select name="LineItems[${i}].Discount_Type" class="form-control fx-disc-type" style="max-width:70px"><option value="Percent">%</option><option value="Amount">₹</option></select>
+                    <input type="number" step="0.0001" min="0" name="LineItems[${i}].Discount_Value" class="form-control fx-num fx-disc-val" value="0" />
+                    <input type="hidden" name="LineItems[${i}].Discount_Amount" class="fx-disc-amt" value="0" />
+                </div>
+            </td>
+            <td class="align-middle"><span class="fx-disc-price">0.0000</span></td>
+            <td>
+                <select name="LineItems[${i}].Tax_Percent" class="form-control form-control-sm fx-tax-pct">
+                    <option value="0">Select Tax</option><option value="5">5%</option><option value="12">12%</option><option value="18">18%</option><option value="28">28%</option>
+                </select>
+            </td>
+            <td class="align-middle"><span class="fx-tax-amt">0.0000</span><input type="hidden" name="LineItems[${i}].Tax_Amount" class="fx-tax-amt-input" value="0" /></td>
+            <td class="align-middle"><span class="fx-line-total">0.0000</span><input type="hidden" name="LineItems[${i}].Line_Total" class="fx-line-total-input" value="0" /></td>
+            <td class="text-right"><button type="button" class="btn btn-fx-icon danger fx-remove-line"><i class="fas fa-times"></i></button></td>`;
         tbody.appendChild(tr);
+        bindProductRow(tr);
+        tr.querySelector('.fx-line-search').focus();
     });
 
     tbody.addEventListener('click', e => {
@@ -345,11 +459,20 @@
                 el.name = el.name.replace(/LineItems\[\d+]/, `LineItems[${i}]`);
             });
         });
+        updateGrand();
+    });
+
+    document.addEventListener('click', e => {
+        if (!e.target.closest('.fx-ac')) {
+            menu.hidden = true;
+            tbody.querySelectorAll('.fx-ac-menu').forEach(m => m.hidden = true);
+        }
     });
 
     if (window.fluxxBindCityCascade) {
         fluxxBindCityCascade('#Ship_State_Id', '#Ship_City_Id', '@Url.Action("Cities", "Lookup")');
     }
+    updateGrand();
 })();
 </script>
 }

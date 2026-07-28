@@ -91,15 +91,22 @@ namespace Inventory.Controllers
                     model.PaymentAccountId,
                     model.PaymentAmount,
                     model.ReferenceNo,
+                    model.TaxableAmount,
+                    model.DiscountType,
+                    model.DiscountValue,
+                    model.DiscountAmount,
+                    model.TaxPercent,
+                    model.TaxAmount,
                     model.BusinessSegmentId,
                     model.BusinessCategoryId,
                     model.BusinessSubCategoryId,
                     User.Identity?.Name,
                     CurrentUserId(),
                     allocJson,
-                    attJson);
+                    attJson,
+                    null);
 
-                var status = result.Rows.Count > 0 ? result.Rows[0]["ApprovalStatus"]?.ToString() : "Approved";
+                var status = FinanceVoucherUi.ReadApprovalStatus(result);
                 TempData["Success"] = status == "PendingApproval"
                     ? "Payment submitted and routed for approval."
                     : "Payment saved and posted to ledger.";
@@ -147,12 +154,17 @@ namespace Inventory.Controllers
                 var items = new List<object>();
                 foreach (DataRow row in new FinanceMasterStore().GetPartyOpenDocuments(partyId).Rows)
                 {
+                    var type = row["DocumentType"]?.ToString() ?? "";
+                    var id = row["DocumentId"]?.ToString() ?? "";
+                    var total = Convert.ToDecimal(row["TotalAmount"]);
+                    var due = Convert.ToDecimal(row["DueAmount"]);
                     items.Add(new
                     {
-                        orderId = row["DocumentId"]?.ToString(),
-                        documentType = row["DocumentType"]?.ToString(),
-                        totalAmount = Convert.ToDecimal(row["TotalAmount"]),
-                        dueAmount = Convert.ToDecimal(row["DueAmount"])
+                        orderId = id,
+                        documentType = type,
+                        totalAmount = total,
+                        dueAmount = due,
+                        label = $"{type} · {id} — Due ₹{due:N4}"
                     });
                 }
                 return Json(new { ok = true, items });
@@ -336,15 +348,22 @@ namespace Inventory.Controllers
                     model.PaymentAccountId,
                     model.PaymentAmount,
                     model.ReferenceNo,
+                    model.TaxableAmount,
+                    model.DiscountType,
+                    model.DiscountValue,
+                    model.DiscountAmount,
+                    model.TaxPercent,
+                    model.TaxAmount,
                     model.BusinessSegmentId,
                     model.BusinessCategoryId,
                     model.BusinessSubCategoryId,
                     User.Identity?.Name,
                     userId,
                     allocJson,
-                    attJson);
+                    attJson,
+                    null);
 
-                var status = result.Rows.Count > 0 ? result.Rows[0]["ApprovalStatus"]?.ToString() : "Approved";
+                var status = FinanceVoucherUi.ReadApprovalStatus(result);
                 TempData["Success"] = status == "PendingApproval"
                     ? "Expense submitted for approval."
                     : "Expense booked and posted to ledger.";
@@ -368,6 +387,36 @@ namespace Inventory.Controllers
             controller.ViewBag.PaymentModes = ToSelect(masters.GetPaymentModes(), "PaymentModeId", "ModeName");
             controller.ViewBag.PaymentAccounts = ToSelect(masters.GetPaymentAccounts(), "PaymentAccountId", "AccountName");
             controller.ViewBag.ExpenseHeads = ToSelect(masters.GetExpenseHeads(), "ExpenseHeadId", "HeadName");
+            try
+            {
+                var percents = new List<SelectListItem>();
+                foreach (DataRow row in masters.GetTaxPercents().Rows)
+                {
+                    var rate = Convert.ToDecimal(row["RatePercent"]);
+                    var label = row["Label"]?.ToString() ?? $"{rate:0.##}%";
+                    percents.Add(new SelectListItem(label, rate.ToString(System.Globalization.CultureInfo.InvariantCulture)));
+                }
+                controller.ViewBag.TaxPercents = new SelectList(percents, "Value", "Text");
+            }
+            catch
+            {
+                controller.ViewBag.TaxPercents = new SelectList(new[]
+                {
+                    new SelectListItem("0%", "0"),
+                    new SelectListItem("5%", "5"),
+                    new SelectListItem("12%", "12"),
+                    new SelectListItem("18%", "18"),
+                    new SelectListItem("28%", "28")
+                }, "Value", "Text");
+            }
+            try
+            {
+                controller.ViewBag.TaxComponents = ToSelect(masters.GetTaxComponents(), "TaxComponentId", "ComponentName");
+            }
+            catch
+            {
+                controller.ViewBag.TaxComponents = new SelectList(new List<SelectListItem> { new("-- Select --", "") }, "Value", "Text");
+            }
             controller.ViewBag.BusinessSegments = ToSelect(masters.GetBusinessSegments(), "BusinessSegmentId", "SegmentName");
             controller.ViewBag.BusinessCategories = ToSelect(masters.GetBusinessCategories(), "BusinessCategoryId", "CategoryName");
 
@@ -379,6 +428,22 @@ namespace Inventory.Controllers
             }
             catch { /* optional */ }
             controller.ViewBag.BillingCompanies = new SelectList(companies, "Value", "Text");
+        }
+
+        public static string SerializeTaxes(List<TaxComponentRowModel>? lines) =>
+            System.Text.Json.JsonSerializer.Serialize((lines ?? new()).Select(t => new
+            {
+                taxComponentId = t.TaxComponentId,
+                ratePercent = t.RatePercent,
+                taxableAmount = t.TaxableAmount,
+                taxAmount = t.TaxAmount
+            }));
+
+        public static string ReadApprovalStatus(DataTable result)
+        {
+            if (result == null || result.Rows.Count == 0) return "Approved";
+            if (!result.Columns.Contains("ApprovalStatus")) return "Approved";
+            return result.Rows[0]["ApprovalStatus"]?.ToString() ?? "Approved";
         }
 
         public static void Validate(Microsoft.AspNetCore.Mvc.ModelBinding.ModelStateDictionary state, FinanceVoucherCreateModel model, bool isExpense)

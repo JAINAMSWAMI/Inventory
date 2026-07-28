@@ -1,9 +1,11 @@
 using DataLayer;
 using Inventory.Infrastructure;
 using Inventory.Models;
+using Inventory.Security;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Data;
+using System.Security.Claims;
 
 namespace Inventory.Controllers
 {
@@ -72,6 +74,23 @@ namespace Inventory.Controllers
                 {
                     model.LowStockItems.Add(MapElectronic(row));
                 }
+
+                if (ModuleAccess.CanAccess(User, "Approvals") &&
+                    int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+                {
+                    foreach (DataRow row in new ApprovalWorkflowStore().GetPendingForUser(userId).Rows)
+                    {
+                        model.PendingApprovalItems.Add(new PendingApprovalSummary
+                        {
+                            Id = Convert.ToInt32(row["Id"]),
+                            FormTypeName = row["FormTypeName"]?.ToString(),
+                            RequestedByName = row["RequestedByName"]?.ToString(),
+                            RequestedAt = row["RequestedAt"] != DBNull.Value ? Convert.ToDateTime(row["RequestedAt"]) : DateTime.MinValue,
+                            RecordId = SafeInt(row, "RecordId")
+                        });
+                    }
+                    model.PendingApprovals = model.PendingApprovalItems.Count;
+                }
             }
             catch (Exception ex)
             {
@@ -80,7 +99,7 @@ namespace Inventory.Controllers
                     User.Identity?.Name ?? "anonymous");
             }
 
-            ViewData["Title"] = "Dashboard";
+            ViewData["Title"] = "Command Center";
             return View(model);
         }
 

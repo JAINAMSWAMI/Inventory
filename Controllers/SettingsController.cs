@@ -15,10 +15,12 @@ namespace Inventory.Controllers
     public class SettingsController : Controller
     {
         private readonly ILogger<SettingsController> _logger;
+        private readonly IWebHostEnvironment _env;
 
-        public SettingsController(ILogger<SettingsController> logger)
+        public SettingsController(ILogger<SettingsController> logger, IWebHostEnvironment env)
         {
             _logger = logger;
+            _env = env;
         }
 
         private IActionResult? RequireSettingsAccess()
@@ -35,6 +37,37 @@ namespace Inventory.Controllers
             if (denied != null) return denied;
             ViewData["Title"] = "Settings";
             return View();
+        }
+
+        [HttpGet]
+        public IActionResult Automation()
+        {
+            var denied = RequireSettingsAccess();
+            if (denied != null) return denied;
+            ViewData["Title"] = "Automation";
+            ViewData["SettingsSection"] = "automation";
+
+            var model = new AutomationHubViewModel();
+            try
+            {
+                model.ActiveWorkflows = new ApprovalWorkflowStore().GetList().Rows.Count;
+                model.ActiveUsers = new UserAdmin().GetAllUsers().Rows.Count;
+
+                var dash = new Dashboard().GetMetrics();
+                if (dash.Rows.Count > 0)
+                {
+                    var row = dash.Rows[0];
+                    model.LowStockAlerts = row.Table.Columns.Contains("LowStockCount") && row["LowStockCount"] != DBNull.Value
+                        ? Convert.ToInt32(row["LowStockCount"])
+                        : 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Automation hub metrics failed to load");
+            }
+
+            return View(model);
         }
 
         [HttpGet]
@@ -358,7 +391,7 @@ namespace Inventory.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult CreateCompany(CompanyEditModel model)
+        public async Task<IActionResult> CreateCompany(CompanyEditModel model)
         {
             var denied = RequireSettingsAccess();
             if (denied != null) return denied;
@@ -372,13 +405,18 @@ namespace Inventory.Controllers
 
             try
             {
+                string? logoUrl = null;
+                if (model.LogoFile != null && model.LogoFile.Length > 0)
+                    logoUrl = await SaveCompanyLogoAsync(model.LogoFile);
+
                 var result = new CompanyStore
                 {
                     CompanyName = model.CompanyName.Trim(),
                     Gstin = model.Gstin,
                     Email = model.Email,
                     Phone = model.Phone,
-                    AddressLine = model.AddressLine
+                    AddressLine = model.AddressLine,
+                    LogoUrl = logoUrl
                 }.Insert();
 
                 if (result == -1)
@@ -407,6 +445,48 @@ namespace Inventory.Controllers
             var fail = LoadPage("companies");
             fail.NewCompany = model;
             return View("Companies", fail);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadCompanyLogo(Guid id, IFormFile? logoFile)
+        {
+            var denied = RequireSettingsAccess();
+            if (denied != null) return denied;
+
+            try
+            {
+                if (logoFile == null || logoFile.Length == 0)
+                {
+                    TempData["Warning"] = "Please Fill Required Detail.";
+                    return RedirectToAction(nameof(Companies));
+                }
+
+                var url = await SaveCompanyLogoAsync(logoFile);
+                if (new CompanyStore().UpdateLogo(id, url) > 0)
+                    TempData["Success"] = "Company invoice logo updated.";
+                else
+                    TempData["Error"] = "Could not update logo.";
+            }
+            catch (Exception ex)
+            {
+                ControllerError.Capture(this, _logger, ex,
+                    "UploadCompanyLogo failed for company {CompanyId}", id);
+            }
+
+            return RedirectToAction(nameof(Companies));
+        }
+
+        private async Task<string> SaveCompanyLogoAsync(IFormFile file)
+        {
+            var root = Path.Combine(_env.WebRootPath ?? "wwwroot", "uploads", "company-logos");
+            Directory.CreateDirectory(root);
+            var safe = Path.GetFileName(file.FileName);
+            var name = $"{Guid.NewGuid():N}_{safe}";
+            var path = Path.Combine(root, name);
+            await using var stream = System.IO.File.Create(path);
+            await file.CopyToAsync(stream);
+            return $"/uploads/company-logos/{name}";
         }
 
         [HttpPost]
@@ -653,6 +733,7 @@ namespace Inventory.Controllers
                                 Email = row["Email"]?.ToString(),
                                 Phone = row["Phone"]?.ToString(),
                                 AddressLine = row["AddressLine"]?.ToString(),
+                                LogoUrl = row.Table.Columns.Contains("LogoUrl") ? row["LogoUrl"]?.ToString() : null,
                                 IsActive = row["IsActive"] != DBNull.Value && Convert.ToBoolean(row["IsActive"]),
                                 CreatedAt = row["CreatedAt"] != DBNull.Value
                                     ? Convert.ToDateTime(row["CreatedAt"]) : DateTime.MinValue

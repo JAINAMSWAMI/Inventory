@@ -1,21 +1,21 @@
 ﻿@model Inventory.Models.GetElectronicModel
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "Products";
+    ViewData["Title"] = "Item Master";
     var totalUnits = Model.Data?.Sum(x => x.Electronic_CRStock) ?? 0;
     var lowCount = Model.Data?.Count(x => x.Electronic_CRStock <= (x.Reorder_Level > 0 ? x.Reorder_Level : 10)) ?? 0;
 }
 
 <div class="page-hero">
     <div>
-        <h1>Product catalog</h1>
-        <p>SKU, cost, reorder levels and warehouse bin locations — real inventory master data.</p>
+        <h1>Item Master</h1>
+        <p>SKU, cost, reorder levels and warehouse bin locations — product master for the ERP.</p>
     </div>
     <div class="d-flex flex-wrap" style="gap:.5rem;">
-        <a class="btn btn-fx" asp-action="AddElectronic"><i class="fas fa-plus mr-1"></i> Add product</a>
+        <a class="btn btn-fx" asp-action="AddElectronic"><i class="fas fa-plus mr-1"></i> Add item</a>
         <a class="btn btn-fx-outline" asp-action="BulkUpload"><i class="fas fa-file-excel mr-1"></i> Import Excel</a>
         <a class="btn btn-fx-outline" asp-action="LowStock"><i class="fas fa-exclamation-triangle mr-1"></i> Low stock</a>
-        <a class="btn btn-fx-outline" asp-controller="Documents" asp-action="CreateGRN"><i class="fas fa-file-import mr-1"></i> GRN</a>
+        <a class="btn btn-fx-outline" asp-controller="Documents" asp-action="CreateGRN"><i class="fas fa-file-import mr-1"></i> Goods Receipt</a>
     </div>
 </div>
 

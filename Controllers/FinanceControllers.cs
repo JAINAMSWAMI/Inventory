@@ -74,13 +74,22 @@ namespace Inventory.Controllers
 
             try
             {
-                var amount = model.LineItems.Sum(l => l.Quantity * l.Unit_Price);
+                var amount = model.LineItems.Sum(l =>
+                    l.Line_Total > 0 ? l.Line_Total : (l.Quantity * l.Unit_Price + l.Tax_Amount));
                 var itemsJson = System.Text.Json.JsonSerializer.Serialize(model.LineItems.Select(l => new
                 {
                     l.Electronic_Id,
                     l.Product_Label,
                     l.Quantity,
-                    l.Unit_Price
+                    l.Unit_Price,
+                    l.HSN_Code,
+                    l.Unit_Of_Measure,
+                    l.Discount_Type,
+                    l.Discount_Value,
+                    l.Discount_Amount,
+                    l.Tax_Percent,
+                    l.Tax_Amount,
+                    l.Line_Total
                 }));
 
                 var store = new InvoiceStore
@@ -124,10 +133,11 @@ namespace Inventory.Controllers
                     ItemsJson = itemsJson
                 };
 
-                if (store.Insert() > 0)
+                var invoiceId = store.Insert();
+                if (invoiceId > 0)
                 {
-                    TempData["Success"] = $"Invoice {store.Invoice_No} saved as {store.Status}.";
-                    return RedirectToAction(nameof(Index));
+                    TempData["Success"] = $"Invoice {store.Invoice_No} saved. Preview is ready.";
+                    return RedirectToAction(nameof(Preview), new { id = invoiceId });
                 }
 
                 TempData["Error"] = string.IsNullOrWhiteSpace(store.LastError)
@@ -143,6 +153,80 @@ namespace Inventory.Controllers
 
             LoadLookups(model.Ship_State_Id);
             return View(model);
+        }
+
+        [HttpGet]
+        public IActionResult Preview(int id)
+        {
+            ViewData["Title"] = "Invoice Preview";
+            try
+            {
+                var (header, items) = new InvoiceStore().GetById(id);
+                if (header.Rows.Count == 0)
+                {
+                    TempData["Error"] = "Invoice not found.";
+                    return RedirectToAction(nameof(Index));
+                }
+
+                var row = header.Rows[0];
+                var model = new InvoicePreviewModel
+                {
+                    Invoice_Id = id,
+                    Invoice_No = row["Invoice_No"]?.ToString() ?? "",
+                    Invoice_Type = row["Invoice_Type"]?.ToString() ?? "Tax",
+                    Invoice_Date = Convert.ToDateTime(row["Invoice_Date"]),
+                    Due_Date = row["Due_Date"] == DBNull.Value ? null : Convert.ToDateTime(row["Due_Date"]),
+                    Status = row["Status"]?.ToString() ?? "",
+                    Payment_Status = row["Payment_Status"]?.ToString() ?? "",
+                    Business_Name = row["Business_Name"]?.ToString() ?? "",
+                    Contact_Name = row["Contact_Name"]?.ToString(),
+                    Contact_Phone = row["Contact_Phone"]?.ToString(),
+                    Billing_Company = row["Billing_Company"]?.ToString(),
+                    Company_LogoUrl = header.Columns.Contains("Company_LogoUrl") ? row["Company_LogoUrl"]?.ToString() : null,
+                    Company_Gstin = header.Columns.Contains("Company_Gstin") ? row["Company_Gstin"]?.ToString() : null,
+                    Company_Email = header.Columns.Contains("Company_Email") ? row["Company_Email"]?.ToString() : null,
+                    Company_Phone = header.Columns.Contains("Company_Phone") ? row["Company_Phone"]?.ToString() : null,
+                    Company_Address = header.Columns.Contains("Company_Address") ? row["Company_Address"]?.ToString() : null,
+                    PO_Number = row["PO_Number"]?.ToString(),
+                    Project_Title = row["Project_Title"]?.ToString(),
+                    Payment_Terms = row["Payment_Terms"]?.ToString(),
+                    Delivery_Terms = row["Delivery_Terms"]?.ToString(),
+                    Ship_Address1 = row["Ship_Address1"]?.ToString(),
+                    Ship_Address2 = row["Ship_Address2"]?.ToString(),
+                    Ship_Pincode = row["Ship_Pincode"]?.ToString(),
+                    Ship_GSTIN = row["Ship_GSTIN"]?.ToString(),
+                    Remarks = row["Remarks"]?.ToString(),
+                    Amount = row["Amount"] == DBNull.Value ? 0 : Convert.ToDecimal(row["Amount"])
+                };
+
+                foreach (DataRow li in items.Rows)
+                {
+                    model.LineItems.Add(new InvoiceLineItemModel
+                    {
+                        Electronic_Id = li["Electronic_Id"] == DBNull.Value ? null : Convert.ToInt32(li["Electronic_Id"]),
+                        Product_Label = li["Product_Label"]?.ToString() ?? "",
+                        HSN_Code = items.Columns.Contains("HSN_Code") ? li["HSN_Code"]?.ToString() : null,
+                        Unit_Of_Measure = items.Columns.Contains("Unit_Of_Measure") ? li["Unit_Of_Measure"]?.ToString() ?? "Pcs" : "Pcs",
+                        Quantity = Convert.ToDecimal(li["Quantity"]),
+                        Unit_Price = Convert.ToDecimal(li["Unit_Price"]),
+                        Discount_Type = items.Columns.Contains("Discount_Type") ? li["Discount_Type"]?.ToString() ?? "Percent" : "Percent",
+                        Discount_Value = items.Columns.Contains("Discount_Value") && li["Discount_Value"] != DBNull.Value ? Convert.ToDecimal(li["Discount_Value"]) : 0,
+                        Discount_Amount = items.Columns.Contains("Discount_Amount") && li["Discount_Amount"] != DBNull.Value ? Convert.ToDecimal(li["Discount_Amount"]) : 0,
+                        Tax_Percent = items.Columns.Contains("Tax_Percent") && li["Tax_Percent"] != DBNull.Value ? Convert.ToDecimal(li["Tax_Percent"]) : 0,
+                        Tax_Amount = items.Columns.Contains("Tax_Amount") && li["Tax_Amount"] != DBNull.Value ? Convert.ToDecimal(li["Tax_Amount"]) : 0,
+                        Line_Total = items.Columns.Contains("Line_Total") && li["Line_Total"] != DBNull.Value
+                            ? Convert.ToDecimal(li["Line_Total"])
+                            : Convert.ToDecimal(li["Quantity"]) * Convert.ToDecimal(li["Unit_Price"])
+                    });
+                }
+
+                return View(model);
+            }
+            catch (Exception ex)
+            {
+                ControllerError.Capture(this, _logger, ex, "Invoice preview failed for {InvoiceId}", id);
+                return RedirectToAction(nameof(Index));
+            }
         }
 
         [HttpGet]
@@ -227,6 +311,53 @@ namespace Inventory.Controllers
             ViewBag.PaymentStatuses = new SelectList(new[] { "Unpaid", "Partial", "Paid" });
             ViewBag.DeliveryTerms = new SelectList(new[] { "Ex-Works", "FOB", "CIF", "Door Delivery" });
             ViewBag.PaymentTerms = LookupOrDefault("PaymentTerms", new[] { "Immediate", "Net 15", "Net 30", "Net 45" });
+            ViewBag.TaxPercents = new SelectList(new[]
+            {
+                new SelectListItem("0%", "0"),
+                new SelectListItem("5%", "5"),
+                new SelectListItem("12%", "12"),
+                new SelectListItem("18%", "18"),
+                new SelectListItem("28%", "28")
+            }, "Value", "Text");
+
+            try
+            {
+                ViewBag.ProductCatalogJson = BuildProductCatalogJson(new Lookup().GetProducts());
+            }
+            catch (Exception ex)
+            {
+                ControllerError.CaptureWarning(this, _logger, ex,
+                    "Failed to load product catalog for invoice for {UserId}",
+                    User.Identity?.Name ?? "anonymous");
+                ViewBag.ProductCatalogJson = "[]";
+            }
+        }
+
+        private static string BuildProductCatalogJson(DataTable dt)
+        {
+            var list = new List<object>();
+            foreach (DataRow row in dt.Rows)
+            {
+                var brand = row["Electronic_Brand"]?.ToString() ?? "";
+                var name = row["Electronic_Name"]?.ToString() ?? "";
+                var stock = row["Electronic_CRStock"] == DBNull.Value ? 0 : Convert.ToInt32(row["Electronic_CRStock"]);
+                var price = row["Electronic_Price"] == DBNull.Value ? 0 : Convert.ToDecimal(row["Electronic_Price"]);
+                var hsn = row.Table.Columns.Contains("HSN_Code") ? row["HSN_Code"]?.ToString() ?? "" : "";
+                var tax = row.Table.Columns.Contains("Tax_Percent") && row["Tax_Percent"] != DBNull.Value
+                    ? Convert.ToDecimal(row["Tax_Percent"]) : 18m;
+                list.Add(new
+                {
+                    id = Convert.ToInt32(row["Electronic_Id"]),
+                    brand,
+                    name,
+                    stock,
+                    price,
+                    hsn,
+                    tax,
+                    label = $"{brand} · {name} (Stock: {stock})"
+                });
+            }
+            return System.Text.Json.JsonSerializer.Serialize(list);
         }
 
         private SelectList LookupOrDefault(string key, string[] fallback)

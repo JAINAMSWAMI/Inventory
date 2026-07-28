@@ -21,6 +21,17 @@ namespace Inventory.Models
         public List<RecentShipmentItem> RecentShipments { get; set; } = new();
         public List<CategoryStockItem> StockByCategory { get; set; } = new();
         public List<GetElectronicModel> LowStockItems { get; set; } = new();
+        public int PendingApprovals { get; set; }
+        public List<PendingApprovalSummary> PendingApprovalItems { get; set; } = new();
+    }
+
+    public class PendingApprovalSummary
+    {
+        public int Id { get; set; }
+        public string? FormTypeName { get; set; }
+        public string? RequestedByName { get; set; }
+        public DateTime RequestedAt { get; set; }
+        public int RecordId { get; set; }
     }
 
     public class RecentShipmentItem

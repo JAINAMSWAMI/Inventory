@@ -36,6 +36,22 @@ namespace Inventory.Models
         /// <summary>Read-only display; not posted as source of truth.</summary>
         public string? PartyBalanceDisplay { get; set; }
 
+        [Range(0, double.MaxValue), Display(Name = "Gross amount")]
+        public decimal? TaxableAmount { get; set; }
+
+        [Display(Name = "Discount type")]
+        public string DiscountType { get; set; } = "Percent";
+
+        [Range(0, double.MaxValue), Display(Name = "Discount")]
+        public decimal DiscountValue { get; set; }
+
+        public decimal DiscountAmount { get; set; }
+
+        [Display(Name = "Tax %")]
+        public decimal TaxPercent { get; set; }
+
+        public decimal TaxAmount { get; set; }
+
         [Required, Range(0.0001, double.MaxValue), Display(Name = "Payment amount")]
         public decimal PaymentAmount { get; set; }
 
@@ -49,15 +65,35 @@ namespace Inventory.Models
         public List<PaymentAllocationRowModel> Allocations { get; set; } = new();
         public List<ExpenseAllocationRowModel> ExpenseAllocations { get; set; } = new();
 
+        /// <summary>Legacy multi-row tax lines — kept for DB writes; UI uses TaxPercent only.</summary>
+        public List<TaxComponentRowModel> TaxLines { get; set; } = new();
+
         public List<IFormFile>? UploadDocuments { get; set; }
 
         public decimal TotalAllocated =>
             (Allocations?.Sum(a => a.AllocatedAmount) ?? 0m)
             + (ExpenseAllocations?.Sum(a => a.AllocatedAmount) ?? 0m);
 
+        public decimal TotalTax => TaxAmount > 0 ? TaxAmount : (TaxLines?.Sum(t => t.TaxAmount) ?? 0m);
+
         public decimal FinalAmount => PaymentAmount - (
             (Allocations?.Sum(a => a.AllocatedAmount) ?? 0m)
             + (ExpenseAllocations?.Sum(a => a.AllocatedAmount) ?? 0m));
+    }
+
+    public class TaxComponentRowModel
+    {
+        [Display(Name = "Tax component")]
+        public int TaxComponentId { get; set; }
+
+        [Display(Name = "Rate %")]
+        public decimal RatePercent { get; set; }
+
+        [Display(Name = "Taxable amount")]
+        public decimal TaxableAmount { get; set; }
+
+        [Range(0, double.MaxValue), Display(Name = "Tax amount")]
+        public decimal TaxAmount { get; set; }
     }
 
     public class PaymentAllocationRowModel

@@ -26,7 +26,7 @@
                 </div>
             </div>
             <div class="card-body">
-                <form asp-action="CreateCompany" method="post">
+                <form asp-action="CreateCompany" method="post" enctype="multipart/form-data">
                     @Html.AntiForgeryToken()
                     <div asp-validation-summary="ModelOnly" class="text-danger mb-2"></div>
                     <div class="form-group">
@@ -51,6 +51,11 @@
                         <label asp-for="NewCompany.AddressLine"></label>
                         <input asp-for="NewCompany.AddressLine" class="form-control" name="AddressLine">
                     </div>
+                    <div class="form-group">
+                        <label asp-for="NewCompany.LogoFile"></label>
+                        <input asp-for="NewCompany.LogoFile" class="form-control-file" name="LogoFile" type="file" accept="image/*">
+                        <span class="fx-field-hint">Shown on printed invoice preview.</span>
+                    </div>
                     <button type="submit" class="btn btn-fx btn-block"><i class="fas fa-plus mr-1"></i> Add company</button>
                 </form>
             </div>
@@ -74,6 +79,7 @@
                             <thead>
                                 <tr>
                                     <th>Company</th>
+                                    <th>Logo</th>
                                     <th>GSTIN</th>
                                     <th>Contact</th>
                                     <th>Status</th>
@@ -89,6 +95,24 @@
                                         @if (!string.IsNullOrWhiteSpace(c.AddressLine))
                                         {
                                             <div class="small text-muted">@c.AddressLine</div>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (!string.IsNullOrWhiteSpace(c.LogoUrl))
+                                        {
+                                            <img src="@c.LogoUrl" alt="logo" style="max-height:36px;max-width:80px;object-fit:contain;" />
+                                        }
+                                        else
+                                        {
+                                            <span class="small text-muted">No logo</span>
+                                        }
+                                        @if (c.IsActive)
+                                        {
+                                            <form asp-action="UploadCompanyLogo" method="post" enctype="multipart/form-data" class="mt-1">
+                                                @Html.AntiForgeryToken()
+                                                <input type="hidden" name="id" value="@c.CompanyId" />
+                                                <input type="file" name="logoFile" accept="image/*" class="form-control-file form-control-sm" onchange="this.form.submit()" />
+                                            </form>
                                         }
                                     </td>
                                     <td>@(c.Gstin ?? "—")</td>

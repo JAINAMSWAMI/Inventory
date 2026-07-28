@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace Inventory.Models
 {
@@ -139,6 +140,7 @@ namespace Inventory.Models
         public string? Email { get; set; }
         public string? Phone { get; set; }
         public string? AddressLine { get; set; }
+        public string? LogoUrl { get; set; }
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
     }
@@ -159,6 +161,9 @@ namespace Inventory.Models
 
         [StringLength(500), Display(Name = "Address")]
         public string? AddressLine { get; set; }
+
+        [Display(Name = "Invoice logo")]
+        public IFormFile? LogoFile { get; set; }
     }
 
     public class LookupPageModel
@@ -253,5 +258,12 @@ namespace Inventory.Models
 
         [Required, StringLength(120), Display(Name = "City name")]
         public string City_Name { get; set; } = string.Empty;
+    }
+
+    public class AutomationHubViewModel
+    {
+        public int ActiveWorkflows { get; set; }
+        public int LowStockAlerts { get; set; }
+        public int ActiveUsers { get; set; }
     }
 }

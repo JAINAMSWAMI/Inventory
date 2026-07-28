@@ -27,7 +27,7 @@ else
             <div class="fx-invoice-row">
                 <div class="fx-invoice-col fx-invoice-main">
                     <div class="fx-invoice-topline">
-                        <a class="fx-invoice-no" href="#">@inv.Invoice_No</a>
+                        <a class="fx-invoice-no" asp-action="Preview" asp-route-id="@inv.Invoice_Id">@inv.Invoice_No</a>
                         <strong class="fx-invoice-title">@(inv.Project_Title ?? inv.Business_Name)</strong>
                     </div>
                     <div class="fx-invoice-meta">
@@ -62,8 +62,8 @@ else
 
                 <div class="fx-invoice-col fx-invoice-side">
                     <div class="fx-invoice-actions">
+                        <a asp-action="Preview" asp-route-id="@inv.Invoice_Id" class="btn btn-sm btn-fx-outline"><i class="fas fa-eye"></i> Preview</a>
                         <a asp-action="Create" class="btn btn-sm btn-fx-outline"><i class="fas fa-pen"></i> Edit</a>
-                        <button type="button" class="btn btn-sm btn-fx" disabled>Action ▾</button>
                     </div>
                     <div class="fx-invoice-meta"><i class="fas fa-users"></i> @(inv.Assignee ?? "—")</div>
                     <div class="fx-invoice-meta"><i class="fas fa-calendar"></i> @inv.Invoice_Date.ToString("dd/MM/yyyy")</div>
